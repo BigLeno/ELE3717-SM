@@ -38,22 +38,73 @@ setup:
 ; Loop Principal
 ; ----------------------------------------------------
 main_loop:
-    ld r20, Z+          ; Lê próximo número para r20
+    ld r20, Z+            ; Lê próximo número da SRAM
+    rcall break_digits    ; Calcula r22 (centena), r23 (dezena), r24 (unidade)
+    rcall mostrar_digitos ; Exibe no display
 
-	; Suponha que r20 já contém o número a ser dividido
-    rcall break_digits
-    ; Agora, r22 = centena, r23 = dezena, r24 = unidade
-
-	rcall mostrar_digitos   ; exibe no display
-
-
-    inc r21             ; Incrementa índice
+    inc r21               ; Incrementa índice
     cpi r21, 10
-    brlo main_loop      ; Continua se ainda não leu todos
+    brlo main_loop        ; Continua se ainda não leu todos
+	rcall reset_ponteiro
+    rjmp main_loop        ; Loop infinito para manter exibição
 
-    rcall reset_ponteiro
-    rjmp main_loop
+verifica:
+	cpi r20, 0
+	breq case_0
+	cpi r20, 1
+	breq case_1
+	cpi r20, 2
+	breq case_2
+	cpi r20, 3
+	breq case_3
+	cpi r20, 4
+	breq case_4
+	cpi r20, 5
+	breq case_5
+	cpi r20, 6
+	breq case_6
+	cpi r20, 7
+	breq case_7
+	cpi r20, 8
+	breq case_8
+	cpi r20, 9
+	breq case_9
 
+
+case_0:
+	ldi r20, 0x00
+	rjmp fim_case
+case_1:
+	ldi r20, 0x80
+	rjmp fim_case
+case_2:
+	ldi r20, 0x40
+	rjmp fim_case
+case_3:
+	ldi r20, 0xC0
+	rjmp fim_case
+case_4:
+	ldi r20, 0x20
+	rjmp fim_case
+case_5:
+	ldi r20, 0xA0
+	rjmp fim_case
+case_6:
+	ldi r20, 0x60
+	rjmp fim_case
+case_7:
+	ldi r20, 0xe0
+	rjmp fim_case
+case_8:
+	ldi r20, 0x10
+	rjmp fim_case
+case_9:
+	ldi r20, 0x90
+	rjmp fim_case
+
+fim_case:
+	ret
+	
 ; ----------------------------------------------------
 ; Sub-rotina: Armazena 10 números fixos em SRAM
 ; ----------------------------------------------------
@@ -61,17 +112,17 @@ salvar_numeros:
     ldi ZH, high(numeros)
     ldi ZL, low(numeros)
 
-    ldi r16, 123
+    ldi r16, 1
     st Z+, r16
-    ldi r16, 45
+    ldi r16, 10
     st Z+, r16
-    ldi r16, 67
+    ldi r16, 100
     st Z+, r16
     ldi r16, 89
     st Z+, r16
     ldi r16, 101
     st Z+, r16
-    ldi r16, 202
+    ldi r16, 3
     st Z+, r16
     ldi r16, 150
     st Z+, r16
@@ -132,52 +183,66 @@ dezena_loop:
 calcula_unidade:
     ; O valor restante em r20 é o dígito das unidades
     mov r24, r20
-
     ret
 
 mostrar_digitos:
 	ldi r16, 0
 
-teste:
+counter:
 	inc r16
     ; Mostra CENTENA
     mov r20, r22        ; r22 = centena
+	rcall verifica
+	cpi r20, 0
+	brne f_port_centena
+	ldi r20, 0xF0
+f_port_centena:
     out PORTD, r20      ; valor direto nos bits baixos, assume PORTD4-7 conectados corretamente
-    sbi PORTB, 0        ; ativa TJ1 (centena)
+    sbi PORTB, 0      ; ativa TJ1 (centena)
 	cbi PORTD, 3
 	cbi PORTD, 2
-    ;rcall espera_curta
+    rcall espera_curta
     cbi PORTB, 0        ; desliga TJ1
 
     ; Mostra DEZENA
     mov r20, r23        ; r23 = dezena
+	rcall verifica
+	cpi r20, 0x00
+	brne f_port_dezena
+	cpi r22, 0x00
+	brne f_port_dezena
+	ldi r20, 0xF0
+f_port_dezena:
     out PORTD, r20
     sbi PORTD, 3        ; ativa TJ2 (dezena)
 	cbi PORTB, 0
 	cbi PORTD, 2
-    ;rcall espera_curta
+    rcall espera_curta
     cbi PORTD, 3        ; desliga TJ2
 
     ; Mostra UNIDADE
     mov r20, r24        ; r24 = unidade
+	rcall verifica
     out PORTD, r20
     sbi PORTD, 2        ; ativa TJ3 (unidade)
 	cbi PORTB, 0
 	cbi PORTD, 3 
-   ; rcall espera_curta
+    rcall espera_curta
     cbi PORTD, 2        ; desliga TJ3
-	cpi r16, 14	; branch para teste:
-	brlo teste
+	cpi r16, 35	; branch para counter:
+	brlo counter
     ret
 
 espera_curta:
-    ldi r18, 100        ; ajustar para ~5ms
-loop1:
-    ldi r19, 200
-loop2:
-    nop
-    dec r19
-    brne loop2
-    dec r18
-    brne loop1
-    ret 
+	ldi r27, 100
+	ldi r28, 0
+delay_loop:
+	dec r28
+	cpi r28, 0
+	brne delay_loop
+
+	dec r27
+	cpi r27, 0
+	brne delay_loop
+
+	ret

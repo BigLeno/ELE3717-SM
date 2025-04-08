@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ATV01-3717-251\ATV01-3717-251\main.asm Mon Apr 07 17:41:25 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ATV01-3717-251\ATV01-3717-251\main.asm Tue Apr 08 19:32:30 2025
 
 
 EQU  SIGNATURE_000 0000001e
@@ -697,16 +697,29 @@ EQU  SPMRaddr     00000032
 EQU  INT_VECTORS_SIZE 00000034
 DSEG numeros      00000100
 CSEG setup        00000001
-CSEG salvar_numeros 00000012
-CSEG reset_ponteiro 00000029
+CSEG salvar_numeros 0000003b
+CSEG reset_ponteiro 00000052
 CSEG main_loop    0000000a
-CSEG break_digits 0000002d
-CSEG mostrar_digitos 0000003e
-CSEG centena_loop 00000031
-CSEG calcula_dezena 00000036
-CSEG dezena_loop  00000037
-CSEG calcula_unidade 0000003c
-CSEG teste        0000003f
-CSEG espera_curta 00000055
-CSEG loop1        00000056
-CSEG loop2        00000057
+CSEG break_digits 00000056
+CSEG mostrar_digitos 00000067
+CSEG verifica     00000012
+CSEG case_0       00000026
+CSEG case_1       00000028
+CSEG case_2       0000002a
+CSEG case_3       0000002c
+CSEG case_4       0000002e
+CSEG case_5       00000030
+CSEG case_6       00000032
+CSEG case_7       00000034
+CSEG case_8       00000036
+CSEG case_9       00000038
+CSEG fim_case     0000003a
+CSEG centena_loop 0000005a
+CSEG calcula_dezena 0000005f
+CSEG dezena_loop  00000060
+CSEG calcula_unidade 00000065
+CSEG counter      00000068
+CSEG f_port_centena 0000006e
+CSEG espera_curta 0000008c
+CSEG f_port_dezena 0000007b
+CSEG delay_loop   0000008e
