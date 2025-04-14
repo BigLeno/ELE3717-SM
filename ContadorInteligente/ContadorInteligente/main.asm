@@ -1,23 +1,21 @@
 .include "m328pdef.inc"
 
 ; Nomeação de registradores
-.def r0 = passo
-.def r1 = minL
-.def r2 = minH
-.def r3 = maxL
-.def r4 = maxH
-.def r5 = modo
-.def r6 = zeroCounter
-.def r16 = timerCounter
-.def r17 = tempInputL
-.def r18 = tempInputH
-.def r20 = displayTemp
-.def r22 = centena
-.def r23 = dezena
-.def r24 = unidade
-.def r25 = divisor
-.def r26 = delayHigh
-.def r27 = delayLow
+.def passo = r0
+.def minl = r1
+.def minH = r2
+.def maxL = r3
+.def maxH = r4
+.def modo = r5
+.def zeroCounter = r6
+.def timerCounter = r16 
+.def tempInputL = r17
+.def tempInputH = r18 
+.def displayTemp = r20 
+.def centena = r22
+.def dezena = r23 
+.def unidade = r24
+.def divisor = r25
 
 
 .org 0x000
@@ -70,7 +68,12 @@ setup:
 
 main_loop:
 
+	ldi ZH, 0x03
+	ldi ZL, 0xE0
 
+	rcall break_digits
+
+	rjmp main_loop
 
 contador_init:
     mov ZL, minL
@@ -161,26 +164,34 @@ break_digits:
     clr unidade
     ; Calcula o dígito das centenas
     ldi divisor, 100
-centena_loop:
-    cp r20, divisor
-    brlo calcula_dezena
-    subiw ZH:ZL, divisor
+centena_loop_h:
+    cpi ZH, 1
+    brge centena_loop_L
+    sbiw ZH:ZL, 50
+	sbiw ZH:ZL, 50
     inc centena
-    rjmp centena_loop
+    rjmp centena_loop_h
+
+centena_loop_L:
+    cp ZL, divisor
+    brlo calcula_dezena
+    sub ZL, divisor
+    inc centena
+    rjmp centena_loop_L
 
 calcula_dezena:
     ; Calcula o dígito das dezenas
     ldi divisor, 10
 dezena_loop:
-    cp r20, divisor
+    cp ZL, divisor
     brlo calcula_unidade
-    sub r20, divisor
+    sub ZL, divisor
     inc dezena
     rjmp dezena_loop
 
 calcula_unidade:
     ; O valor restante em r20 é o dígito das unidades
-    mov unidade, r20
+    mov unidade, ZL
     ret
 
 mostrar_digitos:
@@ -222,15 +233,15 @@ counter:
     ret
 
 espera_curta:
-    ldi delayHigh, 100
-    ldi delayLow, 0
+    ldi XL, 100
+    ldi XH, 0
 delay_loop:
-    dec delayLow
-    cpi delayLow, 0
+    dec XH
+    cpi XH, 0
     brne delay_loop
 
-    dec delayHigh
-    cpi delayHigh, 0
+    dec XL
+    cpi XL, 0
     brne delay_loop
 
     ret
