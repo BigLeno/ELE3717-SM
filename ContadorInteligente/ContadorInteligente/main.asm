@@ -1,23 +1,29 @@
 .include "m328pdef.inc"
 
 ; Nomeação de registradores
+.def r0 = passo
+.def r1 = minL
+.def r2 = minH
+.def r3 = maxL
+.def r4 = maxH
+.def r5 = modo
+.def r6 = zeroCounter
 .def r16 = timerCounter
+.def r17 = tempInputL
+.def r18 = tempInputH
 .def r20 = displayTemp
 .def r22 = centena
 .def r23 = dezena
 .def r24 = unidade
 .def r25 = divisor
-.def r27 = delayHigh
-.def r28 = delayLow
+.def r26 = delayHigh
+.def r27 = delayLow
 
-init_system:
-    clr centena
-    clr dezena
-    clr unidade
-    
 
 .org 0x000
     rjmp setup             ; Ponto de entrada
+
+; 0x03E7 -> 999
 
 ; ----------------------------------------------------
 ; Setup: Configuração inicial dos pinos e memória
@@ -34,7 +40,54 @@ setup:
     sbi DDRD, 6 ; HX2
     sbi DDRD, 7 ; HX3
 
+    ; Configura pinos do led rgb
+    sbi DDRB, 1 ; LED vermelho
+    sbi DDRB, 2 ; LED verde
+    sbi DDRB, 3 ; LED azul
+
+    ; Configura pino do potenciometro
+    sbi DDRC, 0 ; Potenciômetro
+
+    ; Configura pinos do botão
+    cbi DDRC, 1;
+    cbi DDRC, 2;
+    cbi DDRC, 3;
+
+    ; Define os padrões de Fábrica
+    ldi tempInputL, 0x00
+    mov zeroCounter, tempInputL
+    ldi tempInputL, 0x01
+    mov passo, tempInputL
+    ldi tempInputL, 0x00
+    ldi tempInputH, 0x00
+    mov minL, tempInputL
+    mov minH, tempInputH
+    ldi tempInputL, 0x03
+    ldi tempInputH, 0xE7
+    mov maxL, tempInputL
+    mov maxH, tempInputH
+
+
 main_loop:
+
+
+
+contador_init:
+    mov ZL, minL
+    mov ZH, minH
+
+contador_loop:
+    add ZL, passo
+    adc ZH, zeroCounter
+
+    cp ZL, maxL
+    brlo continua
+    cp ZH, maxH
+    brlo continua
+    rjmp contador_init
+
+continua:
+    rjmp contador_loop
 
 verifica:
     cpi displayTemp, 0
@@ -103,12 +156,15 @@ fim_case:
 ;   - r24: Dígito das unidades
 ; ----------------------------------------------------
 break_digits:
+    clr centena
+    clr dezena
+    clr unidade
     ; Calcula o dígito das centenas
     ldi divisor, 100
 centena_loop:
     cp r20, divisor
     brlo calcula_dezena
-    sub r20, divisor
+    subiw ZH:ZL, divisor
     inc centena
     rjmp centena_loop
 
