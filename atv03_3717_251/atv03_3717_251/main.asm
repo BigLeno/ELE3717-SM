@@ -39,15 +39,32 @@ setup:
     sbi DDRC, 4    ; PC4 como saída (Trigger)
     cbi DDRC, 5    ; PC5 como entrada (Echo)
 
+state_verifica_eeprom:
+    ; vai verificar o conteudo da eeprom
+    ; se for 0x00, vai carregar o valor padrão  
+    ; se for diferente disso, vai carregar o valor da eeprom
+
+    ldi r31, 0x00
+
 ; ----------------------------------------------------
 ; Loop Principal
 ; ----------------------------------------------------
 main_loop:
     rcall measure_distance    ; Mede a distância (resultado em r16)
-    mov regAuxiliar, r16     ; Copia o valor para regAuxiliar
+    mov regAuxiliar, r31
+    sbis PINC, 1
+    rcall s1_pressionado     ; Verifica se o botão foi pressionado 
+    rcall exibe_display      ; Exibe no display
+    rjmp main_loop           ; Repete
+
+s1_pressionado:
+    mov r31, r16     ; Copia o valor para regAuxiliar
+    ret
+
+exibe_display:
     rcall break_digits       ; Divide em centenas, dezenas, unidades
     rcall mostrar_digitos    ; Exibe no display
-    rjmp main_loop           ; Repete
+    ret
 
 ; ----------------------------------------------------
 ; Sub-rotina: Gera pulso de Trigger para o HC-SR04
