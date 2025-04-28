@@ -36,16 +36,99 @@ setup:
 
     ; Configura pinos do HC-SR04
     ; PC4 -> Trigger e PC5 -> Echo
-    sbi DDRC, 4;
-    sbi DDRC, 5;
-
+    sbi DDRC, 4    ; PC4 como saída (Trigger)
+    cbi DDRC, 5    ; PC5 como entrada (Echo)
 
 ; ----------------------------------------------------
 ; Loop Principal
 ; ----------------------------------------------------
 main_loop:
+    rcall measure_distance    ; Mede a distância (resultado em r16)
+    mov regAuxiliar, r16     ; Copia o valor para regAuxiliar
+    rcall break_digits       ; Divide em centenas, dezenas, unidades
+    rcall mostrar_digitos    ; Exibe no display
+    rjmp main_loop           ; Repete
+
+; ----------------------------------------------------
+; Sub-rotina: Gera pulso de Trigger para o HC-SR04
+; Entradas:
+;   - Nenhuma
+; Saídas:
+;   - Gera pulso de Trigger no pino PC4
+; ----------------------------------------------------
+trigger_pulse:
+    cbi PORTC, 4     ; Trigger LOW
+    rcall delay_2us  ; Delay de 2 μs
+    sbi PORTC, 4     ; Trigger HIGH
+    rcall delay_10us ; Delay de 10 μs
+    cbi PORTC, 4     ; Trigger LOW
+    ret
+
+; ----------------------------------------------------
+; Sub-rotina: Mede a distância usando o HC-SR04
+; Entradas:
+;   - Nenhuma
+; Saídas:
+;   - r16: Duração do pulso em μs
+;   - r17: Distância em cm (opcional)
+; ----------------------------------------------------
+measure_distance:
+    rcall trigger_pulse
+    ldi r26, HIGH(40000)  ; Timeout ~7m
+    ldi r27, LOW(40000)
     
-    rjmp main_loop        ; Loop infinito para manter exibição
+    ; Espera ativa com verificação de timeout
+echo_wait:
+    sbic PINC, 5
+    rjmp pulse_start
+    sbiw X, 1
+    brne echo_wait
+    ret                 ; Retorna 0 se timeout
+
+pulse_start:
+    clr r26
+    clr r27
+pulse_measure:
+    adiw X, 1
+    sbis PINC, 5
+    rjmp pulse_end
+    cpi r27, LOW(40000)
+    brlo pulse_measure
+
+pulse_end:
+    ; Divisão rápida por 58 usando multiplicação
+    movw r16, X
+    ldi r18, 58
+    rcall divide_16by8
+    ret
+
+divide_16by8:
+    clr r19
+    ldi r20, 16
+div_loop:
+    lsl r16
+    rol r17
+    rol r19
+    cp r19, r18
+    brlo div_next
+    sub r19, r18
+    inc r16
+div_next:
+    dec r20
+    brne div_loop
+    ret
+
+delay_2us:
+    nop
+    nop
+    ret
+
+delay_10us:
+    ldi r19, 4
+delay_loop:
+    dec r19
+    brne delay_loop
+    ret
 
 ; ----------------------------------------------------
 ; Verificação de casos de dígitos, inversão de bits
@@ -193,15 +276,11 @@ counter:
     ret
 
 espera_curta:
-	ldi r27, 100
-	ldi r28, 0
-delay_loop:
-	dec r28
-	cpi r28, 0
-	brne delay_loop
-
-	dec r27
-	cpi r27, 0
-	brne delay_loop
-
-	ret
+    ldi r21, 100   ; Usando registradores não críticos
+    ldi r20, 0
+delay_loop_exibir:
+    dec r20
+    brne delay_loop_exibir
+    dec r21
+    brne delay_loop_exibir
+    ret
