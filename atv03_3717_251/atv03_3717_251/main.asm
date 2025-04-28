@@ -54,6 +54,7 @@ main_loop:
     mov regAuxiliar, r31
     sbis PINC, 1
     rcall s1_pressionado     ; Verifica se o botão foi pressionado 
+    
     rcall exibe_display      ; Exibe no display
     rjmp main_loop           ; Repete
 
