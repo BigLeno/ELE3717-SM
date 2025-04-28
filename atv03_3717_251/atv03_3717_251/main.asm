@@ -73,6 +73,14 @@ verifica:
 	cpi regAuxiliar, 9
 	breq case_9
 
+; ----------------------------------------------------
+; Sub-rotina: Verifica o valor de regAuxiliar e
+;             carrega o valor correspondente em regAuxiliar
+; Entradas:
+;   - regAuxiliar: Número de 0 a 9
+; Saídas:
+;   - regAuxiliar: Valor correspondente para o display
+; ----------------------------------------------------
 case_0:
 	ldi regAuxiliar, 0x00
 	rjmp fim_case
