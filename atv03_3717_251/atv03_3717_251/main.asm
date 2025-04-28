@@ -6,7 +6,6 @@
 .def dezena = r23
 .def unidade = r24
 .def divisor = r25
-.def regCounterSecond = r27
 
 ; ----------------------------------------------------
 ; Código Principal - Início
@@ -194,15 +193,15 @@ counter:
     ret
 
 espera_curta:
-	ldi regCounterSecond, 100
+	ldi r27, 100
 	ldi r28, 0
 delay_loop:
 	dec r28
 	cpi r28, 0
 	brne delay_loop
 
-	dec regCounterSecond
-	cpi regCounterSecond, 0
+	dec r27
+	cpi r27, 0
 	brne delay_loop
 
 	ret

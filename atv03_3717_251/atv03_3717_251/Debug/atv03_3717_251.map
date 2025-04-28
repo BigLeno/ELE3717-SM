@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm Mon Apr 28 17:21:34 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm Mon Apr 28 17:34:04 2025
 
 
 EQU  SIGNATURE_000 0000001e
@@ -695,10 +695,12 @@ EQU  ACIaddr      0000002e
 EQU  TWIaddr      00000030
 EQU  SPMRaddr     00000032
 EQU  INT_VECTORS_SIZE 00000034
+DEF  regCounter   r16
 DEF  regAuxiliar  r20
 DEF  centena      r22
 DEF  dezena       r23
 DEF  unidade      r24
+DEF  divisor      r25
 CSEG setup        00000001
 CSEG main_loop    0000000d
 CSEG verifica     0000000e
@@ -720,7 +722,5 @@ CSEG dezena_loop  00000041
 CSEG calcula_unidade 00000046
 CSEG mostrar_digitos 00000048
 CSEG counter      00000049
-CSEG f_port_centena 0000004f
-CSEG espera_curta 0000006d
-CSEG f_port_dezena 0000005c
-CSEG delay_loop   0000006f
+CSEG espera_curta 00000065
+CSEG delay_loop   00000067
