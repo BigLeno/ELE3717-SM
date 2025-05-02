@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm Mon Apr 28 19:46:48 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm Fri May 02 18:45:35 2025
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
 C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328pdef.inc'
@@ -1081,21 +1081,23 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_2
                                  ; Loop Principal
                                  ; ----------------------------------------------------
                                  main_loop:
-00000e d010                          rcall measure_distance    ; Mede a distância (resultado em r16)
-00000f 2f4f                          mov regAuxiliar, r31
-000010 9b31                          sbis PINC, 1
-000011 d002                          rcall s1_pressionado     ; Verifica se o botão foi pressionado 
-000012 d003                          rcall exibe_display      ; Exibe no display
-000013 cffa                          rjmp main_loop           ; Repete
+00000e d00d                          rcall measure_distance    ; Mede a distância (resultado em r16)
+                                     ; ;mov regAuxiliar, r31
+                                     ; sbic PINC, 1
+                                     ; rcall s1_pressionado     ; Verifica se o botão foi pressionado 
+                                 
+                                     
+00000f d003                          rcall exibe_display      ; Exibe no display
+000010 cffd                          rjmp main_loop           ; Repete
                                  
                                  s1_pressionado:
-000014 2ff0                          mov r31, r16     ; Copia o valor para regAuxiliar
-000015 9508                          ret
+000011 2f41                          mov regAuxiliar, r17     ; Copia o valor para regAuxiliar
+000012 9508                          ret
                                  
                                  exibe_display:
-000016 d057                          rcall break_digits       ; Divide em centenas, dezenas, unidades
-000017 d067                          rcall mostrar_digitos    ; Exibe no display
-000018 9508                          ret
+000013 d054                          rcall break_digits       ; Divide em centenas, dezenas, unidades
+000014 d064                          rcall mostrar_digitos    ; Exibe no display
+000015 9508                          ret
                                  
                                  ; ----------------------------------------------------
                                  ; Sub-rotina: Gera pulso de Trigger para o HC-SR04
@@ -1105,12 +1107,12 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_2
                                  ;   - Gera pulso de Trigger no pino PC4
                                  ; ----------------------------------------------------
                                  trigger_pulse:
-000019 9844                          cbi PORTC, 4     ; Trigger LOW
-00001a d023                          rcall delay_2us  ; Delay de 2 μs
-00001b 9a44                          sbi PORTC, 4     ; Trigger HIGH
-00001c d024                          rcall delay_10us ; Delay de 10 μs
-00001d 9844                          cbi PORTC, 4     ; Trigger LOW
-00001e 9508                          ret
+000016 9844                          cbi PORTC, 4     ; Trigger LOW
+000017 d020                          rcall delay_2us  ; Delay de 2 μs
+000018 9a44                          sbi PORTC, 4     ; Trigger HIGH
+000019 d021                          rcall delay_10us ; Delay de 10 μs
+00001a 9844                          cbi PORTC, 4     ; Trigger LOW
+00001b 9508                          ret
                                  
                                  ; ----------------------------------------------------
                                  ; Sub-rotina: Mede a distância usando o HC-SR04
@@ -1121,87 +1123,89 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_2
                                  ;   - r17: Distância em cm (opcional)
                                  ; ----------------------------------------------------
                                  measure_distance:
-00001f dff9                          rcall trigger_pulse
-000020 e9ac                          ldi r26, HIGH(40000)  ; Timeout ~7m
-000021 e4b0                          ldi r27, LOW(40000)
+00001c dff9                          rcall trigger_pulse
+00001d e1aa                          ldi r26, HIGH(400000)  ; Timeout ~7m
+00001e e8b0                          ldi r27, LOW(400000)
                                      
                                      ; Espera ativa com verificação de timeout
                                  echo_wait:
-000022 9935                          sbic PINC, 5
-000023 c003                          rjmp pulse_start
-000024 9711                          sbiw X, 1
-000025 f7e1                          brne echo_wait
-000026 9508                          ret                 ; Retorna 0 se timeout
+00001f 9935                          sbic PINC, 5
+000020 c003                          rjmp pulse_start
+000021 9711                          sbiw X, 1
+000022 f7e1                          brne echo_wait
+000023 9508                          ret                 ; Retorna 0 se timeout
                                  
                                  pulse_start:
-000027 27aa                          clr r26
-000028 27bb                          clr r27
+000024 27aa                          clr r26
+000025 27bb                          clr r27
                                  pulse_measure:
-000029 9611                          adiw X, 1
-00002a 9b35                          sbis PINC, 5
-00002b c002                          rjmp pulse_end
-00002c 34b0                          cpi r27, LOW(40000)
-00002d f3d8                          brlo pulse_measure
+000026 9611                          adiw X, 1
+000027 9b35                          sbis PINC, 5
+000028 c002                          rjmp pulse_end
+000029 38b0                          cpi r27, LOW(400000)
+00002a f3d8                          brlo pulse_measure
                                  
                                  pulse_end:
-                                     ; Divisão rápida por 58 usando multiplicação
-00002e 018d                          movw r16, X
-00002f e32a                          ldi r18, 58
-000030 d001                          rcall divide_16by8
-000031 9508                          ret
+00002b 2711                          clr r17
+00002c d001                          rcall divide_16by8
+00002d 9508                          ret
                                  
                                  divide_16by8:
-000032 2733                          clr r19
-000033 e140                          ldi r20, 16
-                                 div_loop:
-000034 0f00                          lsl r16
-000035 1f11                          rol r17
-000036 1f33                          rol r19
-000037 1732                          cp r19, r18
-000038 f010                          brlo div_next
-000039 1b32                          sub r19, r18
-00003a 9503                          inc r16
-                                 div_next:
-00003b 954a                          dec r20
-00003c f7b9                          brne div_loop
-00003d 9508                          ret
+00002e 30b0                          cpi XH, 0x00
+00002f f009                          breq verifica_xl
+000030 d002                          rcall divide_loop
+                                 
+                                 verifica_xl:
+000031 33aa                          cpi XL, 58
+000032 f018                          brlo divide_done
+                                 
+                                 divide_loop:
+000033 97da                          sbiw XH:XL, 58
+000034 9513                          inc r17
+000035 dff8                          rcall divide_16by8  
+                                 
+                                 divide_done:
+                                     ; O resultado da divisão está em r17 (distância em cm)
+                                     ; O valor de X é o tempo em μs
+000036 2f41                          mov regAuxiliar, r17 ; Armazena o resultado em regAuxiliar
+000037 9508                          ret
                                  
                                  delay_2us:
-00003e 0000                          nop
-00003f 0000                          nop
-000040 9508                          ret
+000038 0000                          nop
+000039 0000                          nop
+00003a 9508                          ret
                                  
                                  delay_10us:
-000041 e034                          ldi r19, 4
+00003b e034                          ldi r19, 4
                                  delay_loop:
-000042 953a                          dec r19
-000043 f7f1                          brne delay_loop
-000044 9508                          ret
+00003c 953a                          dec r19
+00003d f7f1                          brne delay_loop
+00003e 9508                          ret
                                  
                                  ; ----------------------------------------------------
                                  ; Verificação de casos de dígitos, inversão de bits
                                  ; ----------------------------------------------------
                                  verifica:
-000045 3040                      	cpi regAuxiliar, 0
-000046 f091                      	breq case_0
-000047 3041                      	cpi regAuxiliar, 1
-000048 f091                      	breq case_1
-000049 3042                      	cpi regAuxiliar, 2
-00004a f091                      	breq case_2
-00004b 3043                      	cpi regAuxiliar, 3
-00004c f091                      	breq case_3
-00004d 3044                      	cpi regAuxiliar, 4
-00004e f091                      	breq case_4
-00004f 3045                      	cpi regAuxiliar, 5
-000050 f091                      	breq case_5
-000051 3046                      	cpi regAuxiliar, 6
-000052 f091                      	breq case_6
-000053 3047                      	cpi regAuxiliar, 7
-000054 f091                      	breq case_7
-000055 3048                      	cpi regAuxiliar, 8
-000056 f091                      	breq case_8
-000057 3049                      	cpi regAuxiliar, 9
-000058 f091                      	breq case_9
+00003f 3040                      	cpi regAuxiliar, 0
+000040 f091                      	breq case_0
+000041 3041                      	cpi regAuxiliar, 1
+000042 f091                      	breq case_1
+000043 3042                      	cpi regAuxiliar, 2
+000044 f091                      	breq case_2
+000045 3043                      	cpi regAuxiliar, 3
+000046 f091                      	breq case_3
+000047 3044                      	cpi regAuxiliar, 4
+000048 f091                      	breq case_4
+000049 3045                      	cpi regAuxiliar, 5
+00004a f091                      	breq case_5
+00004b 3046                      	cpi regAuxiliar, 6
+00004c f091                      	breq case_6
+00004d 3047                      	cpi regAuxiliar, 7
+00004e f091                      	breq case_7
+00004f 3048                      	cpi regAuxiliar, 8
+000050 f091                      	breq case_8
+000051 3049                      	cpi regAuxiliar, 9
+000052 f091                      	breq case_9
                                  
                                  ; ----------------------------------------------------
                                  ; Sub-rotina: Verifica o valor de regAuxiliar e
@@ -1212,38 +1216,38 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_2
                                  ;   - regAuxiliar: Valor correspondente para o display
                                  ; ----------------------------------------------------
                                  case_0:
-000059 e040                      	ldi regAuxiliar, 0x00
-00005a c012                      	rjmp fim_case
+000053 e040                      	ldi regAuxiliar, 0x00
+000054 c012                      	rjmp fim_case
                                  case_1:
-00005b e840                      	ldi regAuxiliar, 0x80
-00005c c010                      	rjmp fim_case
+000055 e840                      	ldi regAuxiliar, 0x80
+000056 c010                      	rjmp fim_case
                                  case_2:
-00005d e440                      	ldi regAuxiliar, 0x40
-00005e c00e                      	rjmp fim_case
+000057 e440                      	ldi regAuxiliar, 0x40
+000058 c00e                      	rjmp fim_case
                                  case_3:
-00005f ec40                      	ldi regAuxiliar, 0xC0
-000060 c00c                      	rjmp fim_case
+000059 ec40                      	ldi regAuxiliar, 0xC0
+00005a c00c                      	rjmp fim_case
                                  case_4:
-000061 e240                      	ldi regAuxiliar, 0x20
-000062 c00a                      	rjmp fim_case
+00005b e240                      	ldi regAuxiliar, 0x20
+00005c c00a                      	rjmp fim_case
                                  case_5:
-000063 ea40                      	ldi regAuxiliar, 0xA0
-000064 c008                      	rjmp fim_case
+00005d ea40                      	ldi regAuxiliar, 0xA0
+00005e c008                      	rjmp fim_case
                                  case_6:
-000065 e640                      	ldi regAuxiliar, 0x60
-000066 c006                      	rjmp fim_case
+00005f e640                      	ldi regAuxiliar, 0x60
+000060 c006                      	rjmp fim_case
                                  case_7:
-000067 ee40                      	ldi regAuxiliar, 0xe0
-000068 c004                      	rjmp fim_case
+000061 ee40                      	ldi regAuxiliar, 0xe0
+000062 c004                      	rjmp fim_case
                                  case_8:
-000069 e140                      	ldi regAuxiliar, 0x10
-00006a c002                      	rjmp fim_case
+000063 e140                      	ldi regAuxiliar, 0x10
+000064 c002                      	rjmp fim_case
                                  case_9:
-00006b e940                      	ldi regAuxiliar, 0x90
-00006c c000                      	rjmp fim_case
+000065 e940                      	ldi regAuxiliar, 0x90
+000066 c000                      	rjmp fim_case
                                  
                                  fim_case:
-00006d 9508                      	ret
+000067 9508                      	ret
                                  
                                  ; ----------------------------------------------------
                                  ; Sub-rotina: Divide regAuxiliar por 100, 10 e obtém os dígitos
@@ -1257,80 +1261,80 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_2
                                  ; ----------------------------------------------------
                                  break_digits:
                                      ; Inicializa os registradores de saída
-00006e 2766                          clr centena  ; Centenas
-00006f 2777                          clr dezena  ; Dezenas
-000070 2788                          clr unidade  ; Unidades
+000068 2766                          clr centena  ; Centenas
+000069 2777                          clr dezena  ; Dezenas
+00006a 2788                          clr unidade  ; Unidades
                                  
                                      ; Calcula o dígito das centenas
-000071 e694                          ldi divisor, 100
+00006b e694                          ldi divisor, 100
                                  centena_loop:
-000072 1749                          cp regAuxiliar, divisor
-000073 f018                          brlo calcula_dezena
-000074 1b49                          sub regAuxiliar, divisor
-000075 9563                          inc centena
-000076 cffb                          rjmp centena_loop
+00006c 1749                          cp regAuxiliar, divisor
+00006d f018                          brlo calcula_dezena
+00006e 1b49                          sub regAuxiliar, divisor
+00006f 9563                          inc centena
+000070 cffb                          rjmp centena_loop
                                  
                                  calcula_dezena:
                                      ; Calcula o dígito das dezenas
-000077 e09a                          ldi divisor, 10
+000071 e09a                          ldi divisor, 10
                                  dezena_loop:
-000078 1749                          cp regAuxiliar, divisor
-000079 f018                          brlo calcula_unidade
-00007a 1b49                          sub regAuxiliar, divisor
-00007b 9573                          inc dezena
-00007c cffb                          rjmp dezena_loop
+000072 1749                          cp regAuxiliar, divisor
+000073 f018                          brlo calcula_unidade
+000074 1b49                          sub regAuxiliar, divisor
+000075 9573                          inc dezena
+000076 cffb                          rjmp dezena_loop
                                  
                                  calcula_unidade:
                                      ; O valor restante em regAuxiliar é o dígito das unidades
-00007d 2f84                          mov unidade, regAuxiliar
-00007e 9508                          ret
+000077 2f84                          mov unidade, regAuxiliar
+000078 9508                          ret
                                  
                                  mostrar_digitos:
-00007f e000                      	ldi regCounter, 0
+000079 e000                      	ldi regCounter, 0
                                  
                                  counter:
-000080 9503                      	inc regCounter
+00007a 9503                      	inc regCounter
                                      ; Mostra CENTENA
-000081 2f46                          mov regAuxiliar, centena        
-000082 dfc2                      	rcall verifica
-000083 b94b                          out PORTD, regAuxiliar      ; valor direto nos bits baixos, assume PORTD4-7 conectados corretamente
-000084 9a28                          sbi PORTB, 0      ; ativa TJ1 (centena)
-000085 985b                      	cbi PORTD, 3
-000086 985a                      	cbi PORTD, 2
-000087 d014                          rcall espera_curta
-000088 9828                          cbi PORTB, 0        ; desliga TJ1
+00007b 2f46                          mov regAuxiliar, centena        
+00007c dfc2                      	rcall verifica
+00007d b94b                          out PORTD, regAuxiliar      ; valor direto nos bits baixos, assume PORTD4-7 conectados corretamente
+00007e 9a28                          sbi PORTB, 0      ; ativa TJ1 (centena)
+00007f 985b                      	cbi PORTD, 3
+000080 985a                      	cbi PORTD, 2
+000081 d014                          rcall espera_curta
+000082 9828                          cbi PORTB, 0        ; desliga TJ1
                                  
                                      ; Mostra DEZENA
-000089 2f47                          mov regAuxiliar, dezena        
-00008a dfba                      	rcall verifica
-00008b b94b                          out PORTD, regAuxiliar
-00008c 9a5b                          sbi PORTD, 3        ; ativa TJ2 (dezena)
-00008d 9828                      	cbi PORTB, 0
-00008e 985a                      	cbi PORTD, 2
-00008f d00c                          rcall espera_curta
-000090 985b                          cbi PORTD, 3        ; desliga TJ2
+000083 2f47                          mov regAuxiliar, dezena        
+000084 dfba                      	rcall verifica
+000085 b94b                          out PORTD, regAuxiliar
+000086 9a5b                          sbi PORTD, 3        ; ativa TJ2 (dezena)
+000087 9828                      	cbi PORTB, 0
+000088 985a                      	cbi PORTD, 2
+000089 d00c                          rcall espera_curta
+00008a 985b                          cbi PORTD, 3        ; desliga TJ2
                                  
                                      ; Mostra UNIDADE
-000091 2f48                          mov regAuxiliar, unidade        
-000092 dfb2                      	rcall verifica
-000093 b94b                          out PORTD, regAuxiliar
-000094 9a5a                          sbi PORTD, 2        ; ativa TJ3 (unidade)
-000095 9828                      	cbi PORTB, 0
-000096 985b                      	cbi PORTD, 3 
-000097 d004                          rcall espera_curta
-000098 985a                          cbi PORTD, 2        ; desliga TJ3
-000099 3203                      	cpi regCounter, 35	; branch para counter:
-00009a f328                      	brlo counter
-00009b 9508                          ret
+00008b 2f48                          mov regAuxiliar, unidade        
+00008c dfb2                      	rcall verifica
+00008d b94b                          out PORTD, regAuxiliar
+00008e 9a5a                          sbi PORTD, 2        ; ativa TJ3 (unidade)
+00008f 9828                      	cbi PORTB, 0
+000090 985b                      	cbi PORTD, 3 
+000091 d004                          rcall espera_curta
+000092 985a                          cbi PORTD, 2        ; desliga TJ3
+000093 3203                      	cpi regCounter, 35	; branch para counter:
+000094 f328                      	brlo counter
+000095 9508                          ret
                                  
                                  espera_curta:
-00009c e654                          ldi r21, 100   ; Usando registradores não críticos
-00009d e040                          ldi r20, 0
+000096 e654                          ldi r21, 100   ; Usando registradores não críticos
+000097 e040                          ldi r20, 0
                                  delay_loop_exibir:
-00009e 954a                          dec r20
-00009f f7f1                          brne delay_loop_exibir
-0000a0 955a                          dec r21
-0000a1 f7e1                          brne delay_loop_exibir
+000098 954a                          dec r20
+000099 f7f1                          brne delay_loop_exibir
+00009a 955a                          dec r21
+00009b f7e1                          brne delay_loop_exibir
 
 
 RESOURCE USE INFORMATION
@@ -1348,39 +1352,39 @@ counted separately from r26..r31 here.
 .dseg memory usage only counts static data declared with .byte
 
 "ATmega328P" register use summary:
-x  :   3 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
+x  :   2 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:   7 r17:   1 r18:   3 r19:   6 r20:  36 
-r21:   2 r22:   3 r23:   3 r24:   3 r25:   6 r26:   2 r27:   3 r28:   0 
-r29:   0 r30:   0 r31:   3 
-Registers used: 14 out of 35 (40.0%)
+r13:   0 r14:   0 r15:   0 r16:   3 r17:   4 r18:   0 r19:   2 r20:  35 
+r21:   2 r22:   3 r23:   3 r24:   3 r25:   6 r26:   4 r27:   5 r28:   0 
+r29:   0 r30:   0 r31:   1 
+Registers used: 13 out of 35 (37.1%)
 
 "ATmega328P" instruction use summary:
 .lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   1 and   :   0 
 andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
-brcc  :   0 brcs  :   0 break :   0 breq  :  10 brge  :   0 brhc  :   0 
+brcc  :   0 brcs  :   0 break :   0 breq  :  11 brge  :   0 brhc  :   0 
 brhs  :   0 brid  :   0 brie  :   0 brlo  :   5 brlt  :   0 brmi  :   0 
-brne  :   5 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
+brne  :   4 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
 brvs  :   0 bset  :   0 bst   :   0 call  :   0 cbi   :  15 cbr   :   0 
 clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   6 cls   :   0 
-clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   3 cpc   :   0 
-cpi   :  12 cpse  :   0 dec   :   4 eor   :   0 fmul  :   0 fmuls :   0 
+clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   2 cpc   :   0 
+cpi   :  14 cpse  :   0 dec   :   3 eor   :   0 fmul  :   0 fmuls :   0 
 fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   4 jmp   :   0 
-ld    :   0 ldd   :   0 ldi   :  21 lds   :   0 lpm   :   0 lsl   :   1 
-lsr   :   0 mov   :   6 movw  :   1 mul   :   0 muls  :   0 mulsu :   0 
+ld    :   0 ldd   :   0 ldi   :  19 lds   :   0 lpm   :   0 lsl   :   0 
+lsr   :   0 mov   :   6 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
 neg   :   0 nop   :   2 or    :   0 ori   :   0 out   :   3 pop   :   0 
-push  :   0 rcall :  15 ret   :  12 reti  :   0 rjmp  :  16 rol   :   2 
-ror   :   0 sbc   :   0 sbci  :   0 sbi   :  12 sbic  :   1 sbis  :   2 
-sbiw  :   1 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 seh   :   0 
+push  :   0 rcall :  16 ret   :  12 reti  :   0 rjmp  :  16 rol   :   0 
+ror   :   0 sbc   :   0 sbci  :   0 sbi   :  12 sbic  :   1 sbis  :   1 
+sbiw  :   2 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 seh   :   0 
 sei   :   0 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
 sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 sts   :   0 
-sub   :   3 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
-Instructions used: 25 out of 113 (22.1%)
+sub   :   2 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
+Instructions used: 22 out of 113 (19.5%)
 
 "ATmega328P" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x000146    326      0    326   32768   1.0%
+[.cseg] 0x000000 0x00013a    314      0    314   32768   1.0%
 [.dseg] 0x000100 0x000100      0      0      0    2048   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 

@@ -51,15 +51,16 @@ state_verifica_eeprom:
 ; ----------------------------------------------------
 main_loop:
     rcall measure_distance    ; Mede a distância (resultado em r16)
-    mov regAuxiliar, r31
-    sbis PINC, 1
-    rcall s1_pressionado     ; Verifica se o botão foi pressionado 
+    ; ;mov regAuxiliar, r31
+    ; sbic PINC, 1
+    ; rcall s1_pressionado     ; Verifica se o botão foi pressionado 
+
     
     rcall exibe_display      ; Exibe no display
     rjmp main_loop           ; Repete
 
 s1_pressionado:
-    mov r31, r16     ; Copia o valor para regAuxiliar
+    mov regAuxiliar, r17     ; Copia o valor para regAuxiliar
     ret
 
 exibe_display:
@@ -114,26 +115,28 @@ pulse_measure:
     brlo pulse_measure
 
 pulse_end:
-    ; Divisão rápida por 58 usando multiplicação
-    movw r16, X
-    ldi r18, 58
+    clr r17
     rcall divide_16by8
     ret
 
 divide_16by8:
-    clr r19
-    ldi r20, 16
-div_loop:
-    lsl r16
-    rol r17
-    rol r19
-    cp r19, r18
-    brlo div_next
-    sub r19, r18
-    inc r16
-div_next:
-    dec r20
-    brne div_loop
+    cpi XH, 0x00
+    breq verifica_xl
+    rcall divide_loop
+
+verifica_xl:
+    cpi XL, 58
+    brlo divide_done
+
+divide_loop:
+    sbiw XH:XL, 58
+    inc r17
+    rcall divide_16by8  
+
+divide_done:
+    ; O resultado da divisão está em r17 (distância em cm)
+    ; O valor de X é o tempo em μs
+    mov regAuxiliar, r17 ; Armazena o resultado em regAuxiliar
     ret
 
 delay_2us:

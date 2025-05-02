@@ -26,40 +26,41 @@
   <setup><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>20</LINE></setup>
   <state_verifica_eeprom><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>42</LINE></state_verifica_eeprom>
   <main_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>52</LINE></main_loop>
-  <measure_distance><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>92</LINE></measure_distance>
-  <s1_pressionado><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>60</LINE></s1_pressionado>
-  <exibe_display><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>64</LINE></exibe_display>
-  <break_digits><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>227</LINE></break_digits>
-  <mostrar_digitos><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>257</LINE></mostrar_digitos>
-  <trigger_pulse><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>76</LINE></trigger_pulse>
-  <delay_2us><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>138</LINE></delay_2us>
-  <delay_10us><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>143</LINE></delay_10us>
-  <echo_wait><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>98</LINE></echo_wait>
-  <pulse_start><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>105</LINE></pulse_start>
-  <pulse_measure><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>108</LINE></pulse_measure>
-  <pulse_end><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>115</LINE></pulse_end>
+  <measure_distance><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>94</LINE></measure_distance>
+  <exibe_display><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>66</LINE></exibe_display>
+  <s1_pressionado><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>62</LINE></s1_pressionado>
+  <break_digits><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>231</LINE></break_digits>
+  <mostrar_digitos><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>261</LINE></mostrar_digitos>
+  <trigger_pulse><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>78</LINE></trigger_pulse>
+  <delay_2us><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>142</LINE></delay_2us>
+  <delay_10us><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>147</LINE></delay_10us>
+  <echo_wait><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>100</LINE></echo_wait>
+  <pulse_start><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>107</LINE></pulse_start>
+  <pulse_measure><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>110</LINE></pulse_measure>
+  <pulse_end><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>117</LINE></pulse_end>
   <divide_16by8><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>122</LINE></divide_16by8>
-  <div_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>125</LINE></div_loop>
-  <div_next><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>133</LINE></div_next>
-  <delay_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>145</LINE></delay_loop>
-  <verifica><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>153</LINE></verifica>
-  <case_0><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>183</LINE></case_0>
-  <case_1><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>186</LINE></case_1>
-  <case_2><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>189</LINE></case_2>
-  <case_3><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>192</LINE></case_3>
-  <case_4><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>195</LINE></case_4>
-  <case_5><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>198</LINE></case_5>
-  <case_6><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>201</LINE></case_6>
-  <case_7><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>204</LINE></case_7>
-  <case_8><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>207</LINE></case_8>
-  <case_9><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>210</LINE></case_9>
-  <fim_case><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>214</LINE></fim_case>
-  <centena_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>235</LINE></centena_loop>
-  <calcula_dezena><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>242</LINE></calcula_dezena>
-  <dezena_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>245</LINE></dezena_loop>
-  <calcula_unidade><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>252</LINE></calcula_unidade>
-  <counter><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>260</LINE></counter>
-  <espera_curta><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>295</LINE></espera_curta>
-  <delay_loop_exibir><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>298</LINE></delay_loop_exibir>
+  <verifica_xl><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>127</LINE></verifica_xl>
+  <divide_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>131</LINE></divide_loop>
+  <divide_done><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>136</LINE></divide_done>
+  <delay_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>149</LINE></delay_loop>
+  <verifica><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>157</LINE></verifica>
+  <case_0><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>187</LINE></case_0>
+  <case_1><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>190</LINE></case_1>
+  <case_2><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>193</LINE></case_2>
+  <case_3><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>196</LINE></case_3>
+  <case_4><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>199</LINE></case_4>
+  <case_5><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>202</LINE></case_5>
+  <case_6><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>205</LINE></case_6>
+  <case_7><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>208</LINE></case_7>
+  <case_8><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>211</LINE></case_8>
+  <case_9><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>214</LINE></case_9>
+  <fim_case><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>218</LINE></fim_case>
+  <centena_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>239</LINE></centena_loop>
+  <calcula_dezena><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>246</LINE></calcula_dezena>
+  <dezena_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>249</LINE></dezena_loop>
+  <calcula_unidade><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>256</LINE></calcula_unidade>
+  <counter><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>264</LINE></counter>
+  <espera_curta><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>299</LINE></espera_curta>
+  <delay_loop_exibir><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>302</LINE></delay_loop_exibir>
  </LABELS>
 </ASSEMBLER_INFO>
