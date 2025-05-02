@@ -51,16 +51,16 @@ state_verifica_eeprom:
 ; ----------------------------------------------------
 main_loop:
     rcall measure_distance    ; Mede a distância (resultado em r16)
-    ; ;mov regAuxiliar, r31
-    ; sbic PINC, 1
-    ; rcall s1_pressionado     ; Verifica se o botão foi pressionado 
+    mov regAuxiliar, r31
+    sbis PINC, 1
+    rcall s1_pressionado     ; Verifica se o botão foi pressionado 
 
     
     rcall exibe_display      ; Exibe no display
     rjmp main_loop           ; Repete
 
 s1_pressionado:
-    mov regAuxiliar, r17     ; Copia o valor para regAuxiliar
+    mov r31, r17     ; Copia o valor para regAuxiliar
     ret
 
 exibe_display:
@@ -136,7 +136,7 @@ divide_loop:
 divide_done:
     ; O resultado da divisão está em r17 (distância em cm)
     ; O valor de X é o tempo em μs
-    mov regAuxiliar, r17 ; Armazena o resultado em regAuxiliar
+    ;mov regAuxiliar, r17 ; Armazena o resultado em regAuxiliar
     ret
 
 delay_2us:

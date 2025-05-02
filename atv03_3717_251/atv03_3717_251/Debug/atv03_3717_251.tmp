@@ -27,8 +27,8 @@
   <state_verifica_eeprom><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>42</LINE></state_verifica_eeprom>
   <main_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>52</LINE></main_loop>
   <measure_distance><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>94</LINE></measure_distance>
-  <exibe_display><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>66</LINE></exibe_display>
   <s1_pressionado><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>62</LINE></s1_pressionado>
+  <exibe_display><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>66</LINE></exibe_display>
   <break_digits><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>231</LINE></break_digits>
   <mostrar_digitos><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>261</LINE></mostrar_digitos>
   <trigger_pulse><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm</FILE><LINE>78</LINE></trigger_pulse>
