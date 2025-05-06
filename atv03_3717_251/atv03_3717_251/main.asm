@@ -7,12 +7,19 @@
 .def unidade = r24
 .def divisor = r25
 
+
 ; ----------------------------------------------------
 ; Código Principal - Início
 ; ----------------------------------------------------
 .cseg
 .org 0x000
     rjmp setup             ; Ponto de entrada
+
+; ----------------------------------------------------
+; Vetor de Interrupção PCI1 (Pin Change Interrupt 1 - Port C)
+; ----------------------------------------------------
+.org PCI1addr            ; Endereço do vetor de interrupção PCI1
+    rjmp PCINT1_ISR      ; Salta para a rotina de serviço
 
 ; ----------------------------------------------------
 ; Setup: Configuração inicial dos pinos e memória
@@ -31,13 +38,23 @@ setup:
 
     ; Configura pinos do botão
     cbi DDRC, 1;
-    cbi DDRC, 2;
-    cbi DDRC, 3;
+    ; cbi DDRC, 2;
+    ; cbi DDRC, 3;
 
     ; Configura pinos do HC-SR04
     ; PC4 -> Trigger e PC5 -> Echo
     sbi DDRC, 4    ; PC4 como saída (Trigger)
     cbi DDRC, 5    ; PC5 como entrada (Echo)
+
+    ; Habilita interrupção por mudança no pino PC1 (PCINT9)
+    ldi r26, (1 << PCIE1)   ; Habilita PCI1 (Port C) no PCICR
+    sts PCICR, r26
+    ldi r26, (1 << PCINT9)  ; Habilita PCINT9 (PC1) no PCMSK1
+    sts PCMSK1, r26
+
+    sei                     ; Habilita interrupções globais
+
+    clr r30                 ; Inicializa flag de interrupção (bit 0)
 
 state_verifica_eeprom:
     ; vai verificar o conteudo da eeprom
@@ -50,24 +67,37 @@ state_verifica_eeprom:
 ; Loop Principal
 ; ----------------------------------------------------
 main_loop:
-    rcall measure_distance    ; Mede a distância (resultado em r16)
-    mov regAuxiliar, r31
-    sbis PINC, 1
-    rcall s1_pressionado     ; Verifica se o botão foi pressionado 
+    rcall measure_distance    ; Mede a distância (resultado em r17)
+    sbrs r30, 0              ; Verifica se o botão foi pressionado
+    rjmp exibe_default
+    mov r31, r17             ; Atualiza regAuxiliar apenas se botão pressionado
+    clr r30                  ; Reseta flag do botão
 
-    
+exibe_default:
+    mov regAuxiliar, r31     ; Carrega valor atual (0 ou última medição)
     rcall exibe_display      ; Exibe no display
-    rjmp main_loop           ; Repete
-
-s1_pressionado:
-    mov r31, r17     ; Copia o valor para regAuxiliar
-    ret
+    rjmp main_loop
 
 exibe_display:
     rcall break_digits       ; Divide em centenas, dezenas, unidades
     rcall mostrar_digitos    ; Exibe no display
     ret
 
+; ----------------------------------------------------
+; Rotina de Serviço de Interrupção (ISR) para PCINT1
+; ----------------------------------------------------
+PCINT1_ISR:
+    push r26
+    in r26, SREG
+    push r26
+    sbic PINC, PC1       ; Se botão está pressionado (LOW)
+    rjmp fim_isr
+    sbr r30, 1           ; Seta flag do botão (bit 0)
+fim_isr:
+    pop r26
+    out SREG, r26
+    pop r26
+    reti
 ; ----------------------------------------------------
 ; Sub-rotina: Gera pulso de Trigger para o HC-SR04
 ; Entradas:
@@ -135,7 +165,7 @@ divide_loop:
 
 divide_done:
     ; O resultado da divisão está em r17 (distância em cm)
-    ; O valor de X é o tempo em μs
+    ; O valor de X é o r26o em μs
     ;mov regAuxiliar, r17 ; Armazena o resultado em regAuxiliar
     ret
 
