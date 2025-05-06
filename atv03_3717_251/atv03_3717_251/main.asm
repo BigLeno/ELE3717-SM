@@ -49,7 +49,7 @@ setup:
     ; Habilita interrupção por mudança no pino PC1 (PCINT9)
     ldi r26, (1 << PCIE1)   ; Habilita PCI1 (Port C) no PCICR
     sts PCICR, r26
-    ldi r26, (1 << PCINT9)  ; Habilita PCINT9 (PC1) no PCMSK1
+    ldi r26, (1 << PCINT9) | (1 << PCINT10) | (1 << PCINT11)  ; Habilita PCINT9, PCINT10, PCINT11 (PC1, PC2, PC3)
     sts PCMSK1, r26
 
     sei                     ; Habilita interrupções globais
@@ -90,9 +90,15 @@ PCINT1_ISR:
     push r26
     in r26, SREG
     push r26
-    sbic PINC, PC1       ; Se botão está pressionado (LOW)
-    rjmp fim_isr
-    sbr r30, 1           ; Seta flag do botão (bit 0)
+    ; Verifica os três botões: PC1, PC2 e PC3
+    sbis PINC, PC1      ; Se PC1 está LOW (botão pressionado)
+    sbr r30, 1
+
+    sbis PINC, PC2      ; Se PC2 está LOW
+    sbr r30, 1
+
+    sbis PINC, PC3      ; Se PC3 está LOW
+    sbr r30, 1
 fim_isr:
     pop r26
     out SREG, r26
