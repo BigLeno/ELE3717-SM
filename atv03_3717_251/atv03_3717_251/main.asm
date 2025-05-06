@@ -67,15 +67,33 @@ state_verifica_eeprom:
 ; Loop Principal
 ; ----------------------------------------------------
 main_loop:
-    rcall measure_distance    ; Mede a distância (resultado em r17)
-    sbrs r30, 0              ; Verifica se o botão foi pressionado
+    sbrs r30, 0              ; Checa se PC1 (medir distância) foi pressionado
+    rjmp checa_botao_pc2
+    rcall measure_distance    ; Mede distância (resultado em r17)
+    mov r31, r17             ; Atualiza regAuxiliar
+    rjmp atualiza_display
+
+checa_botao_pc2:
+    sbrs r30, 1              ; Checa se PC2 foi pressionado
+    rjmp checa_botao_pc3
+    ldi r31, 2               ; Mostra 2 no display
+    rjmp atualiza_display
+
+checa_botao_pc3:
+    sbrs r30, 2              ; Checa se PC3 foi pressionado
     rjmp exibe_default
-    mov r31, r17             ; Atualiza regAuxiliar apenas se botão pressionado
-    clr r30                  ; Reseta flag do botão
+    ldi r31, 3               ; Mostra 3 no display
+    rjmp atualiza_display
+
+atualiza_display:
+    clr r30                  ; Limpa todos os bits de flag
+    mov regAuxiliar, r31
+    rcall exibe_display
+    rjmp main_loop
 
 exibe_default:
-    mov regAuxiliar, r31     ; Carrega valor atual (0 ou última medição)
-    rcall exibe_display      ; Exibe no display
+    mov regAuxiliar, r31
+    rcall exibe_display
     rjmp main_loop
 
 exibe_display:
@@ -90,15 +108,23 @@ PCINT1_ISR:
     push r26
     in r26, SREG
     push r26
-    ; Verifica os três botões: PC1, PC2 e PC3
-    sbis PINC, PC1      ; Se PC1 está LOW (botão pressionado)
-    sbr r30, 1
 
-    sbis PINC, PC2      ; Se PC2 está LOW
-    sbr r30, 1
+    ; Verifica PC1 (botão de medir)
+    sbis PINC, PC1
+    sbr r30, (1 << 0)    ; seta bit 0
 
-    sbis PINC, PC3      ; Se PC3 está LOW
-    sbr r30, 1
+    ; Verifica PC2
+    sbis PINC, PC2
+    sbr r30, (1 << 1)    ; seta bit 1
+
+    ; Verifica PC3
+    sbis PINC, PC3
+    sbr r30, (1 << 2)    ; seta bit 2
+
+    pop r26
+    out SREG, r26
+    pop r26
+    reti
 fim_isr:
     pop r26
     out SREG, r26
