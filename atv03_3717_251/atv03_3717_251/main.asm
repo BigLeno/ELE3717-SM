@@ -36,11 +36,6 @@ setup:
     sbi DDRD, 6 ; HX2
     sbi DDRD, 7 ; HX3
 
-    ; Configura pinos do botão
-    cbi DDRC, 1;
-    ; cbi DDRC, 2;
-    ; cbi DDRC, 3;
-
     ; Configura pinos do HC-SR04
     ; PC4 -> Trigger e PC5 -> Echo
     sbi DDRC, 4    ; PC4 como saída (Trigger)
@@ -366,4 +361,34 @@ delay_loop_exibir:
     brne delay_loop_exibir
     dec r21
     brne delay_loop_exibir
+    ret
+
+; ----------------------------------------------------
+; Sub-rotina: Escrita na EEPROM
+; Entradas:
+;   - r30 = endereço
+;   - r31 = dado a ser salvo
+; ----------------------------------------------------
+eeprom_write:
+    sbic EECR, EEPE          ; Espera se EEPROM estiver ocupada
+    rjmp eeprom_write
+    out EEARL, r30           ; Define endereço
+    out EEDR, r31            ; Define dado
+    sbi EECR, EEMPE          ; Habilita gravação
+    sbi EECR, EEPE           ; Inicia gravação
+    ret
+
+; ----------------------------------------------------
+; Sub-rotina: Leitura da EEPROM
+; Entradas:
+;   - r30 = endereço
+; Saídas:
+;   - r31 = valor lido
+; ----------------------------------------------------
+eeprom_read:
+    sbic EECR, EEPE          ; Espera se EEPROM estiver ocupada
+    rjmp eeprom_read
+    out EEARL, r30
+    sbi EECR, EERE           ; Dispara leitura
+    in r31, EEDR             ; Lê valor
     ret
