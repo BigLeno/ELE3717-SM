@@ -69,16 +69,20 @@ main_loop:
     rjmp atualiza_display
 
 checa_botao_pc2:
-    sbrs r30, 1              ; Checa se PC2 foi pressionado
+    sbrs r30, 1
     rjmp checa_botao_pc3
-    ldi r31, 2               ; Mostra 2 no display
-    rjmp atualiza_display
+    ldi r30, 0x00            ; Endereço da EEPROM
+    mov r28, r17             ; Valor a ser salvo (última medição)
+    rcall eeprom_write
 
 checa_botao_pc3:
-    sbrs r30, 2              ; Checa se PC3 foi pressionado
+    sbrs r30, 2              ; Verifica se PC3 foi pressionado
     rjmp exibe_default
-    ldi r31, 3               ; Mostra 3 no display
-    rjmp atualiza_display
+
+    ldi r30, 0x00            ; Endereço da EEPROM que usou (ex: 0)
+    rcall eeprom_read        ; Valor lido retornará em r31
+    mov r31, r28
+    rjmp atualiza_display    ; Exibe valor lido
 
 atualiza_display:
     clr r30                  ; Limpa todos os bits de flag
@@ -367,13 +371,13 @@ delay_loop_exibir:
 ; Sub-rotina: Escrita na EEPROM
 ; Entradas:
 ;   - r30 = endereço
-;   - r31 = dado a ser salvo
+;   - r28 = dado a ser salvo
 ; ----------------------------------------------------
 eeprom_write:
     sbic EECR, EEPE          ; Espera se EEPROM estiver ocupada
     rjmp eeprom_write
     out EEARL, r30           ; Define endereço
-    out EEDR, r31            ; Define dado
+    out EEDR, r28            ; Define dado
     sbi EECR, EEMPE          ; Habilita gravação
     sbi EECR, EEPE           ; Inicia gravação
     ret
@@ -383,12 +387,12 @@ eeprom_write:
 ; Entradas:
 ;   - r30 = endereço
 ; Saídas:
-;   - r31 = valor lido
+;   - r28 = valor lido
 ; ----------------------------------------------------
 eeprom_read:
     sbic EECR, EEPE          ; Espera se EEPROM estiver ocupada
     rjmp eeprom_read
     out EEARL, r30
     sbi EECR, EERE           ; Dispara leitura
-    in r31, EEDR             ; Lê valor
+    in r28, EEDR             ; Lê valor
     ret
