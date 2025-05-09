@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Mon Apr 14 20:15:22 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Fri May 09 19:19:54 2025
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
 C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328pdef.inc'
@@ -1032,19 +1032,10 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
                                  ; ***** END OF FILE ******************************************************
                                  
                                  ; Nomeação de registradores
-                                 .def passo = r0
-                                 .def minl = r1
-                                 .def minH = r2
-                                 .def maxL = r3
-                                 .def maxH = r4
-                                 .def modo = r5
-                                 .def zeroCounter = r6
-                                 .def timerCounter = r16 
-                                 .def tempInputL = r17
-                                 .def tempInputH = r18 
-                                 .def displayTemp = r20 
+                                 .def regCounter = r16
+                                 .def regAuxiliar = r20
                                  .def centena = r22
-                                 .def dezena = r23 
+                                 .def dezena = r23
                                  .def unidade = r24
                                  .def divisor = r25
                                  
@@ -1082,200 +1073,173 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
 00000d 983a                          cbi DDRC, 2;
 00000e 983b                          cbi DDRC, 3;
                                  
-                                     ; Define os padrões de Fábrica
-00000f e010                          ldi tempInputL, 0x00
-000010 2e61                          mov zeroCounter, tempInputL
-000011 e011                          ldi tempInputL, 0x01
-000012 2e01                          mov passo, tempInputL
-000013 e010                          ldi tempInputL, 0x00
-000014 e020                          ldi tempInputH, 0x00
-000015 2e11                          mov minL, tempInputL
-000016 2e22                          mov minH, tempInputH
-000017 e013                          ldi tempInputL, 0x03
-000018 ee27                          ldi tempInputH, 0xE7
-000019 2e31                          mov maxL, tempInputL
-00001a 2e42                          mov maxH, tempInputH
-                                 
-                                 
                                  main_loop:
                                  
-00001b e0f3                      	ldi ZH, 0x03
-00001c eee0                      	ldi ZL, 0xE0
                                  
-00001d d034                      	rcall break_digits
+00000f d02a                      	rcall break_digits
                                  
-00001e cffc                      	rjmp main_loop
+000010 cffe                      	rjmp main_loop
                                  
-                                 contador_init:
-00001f 2de1                          mov ZL, minL
-000020 2df2                          mov ZH, minH
                                  
-                                 contador_loop:
-000021 0de0                          add ZL, passo
-000022 1df6                          adc ZH, zeroCounter
-                                 
-000023 15e3                          cp ZL, maxL
-000024 f018                          brlo continua
-000025 15f4                          cp ZH, maxH
-000026 f008                          brlo continua
-000027 cff7                          rjmp contador_init
-                                 
-                                 continua:
-000028 cff8                          rjmp contador_loop
-                                 
+                                 ; ----------------------------------------------------
+                                 ; Verificação de casos de dígitos, inversão de bits
+                                 ; ----------------------------------------------------
                                  verifica:
-000029 3040                          cpi displayTemp, 0
-00002a f091                          breq case_0
-00002b 3041                          cpi displayTemp, 1
-00002c f091                          breq case_1
-00002d 3042                          cpi displayTemp, 2
-00002e f091                          breq case_2
-00002f 3043                          cpi displayTemp, 3
-000030 f091                          breq case_3
-000031 3044                          cpi displayTemp, 4
-000032 f091                          breq case_4
-000033 3045                          cpi displayTemp, 5
-000034 f091                          breq case_5
-000035 3046                          cpi displayTemp, 6
-000036 f091                          breq case_6
-000037 3047                          cpi displayTemp, 7
-000038 f091                          breq case_7
-000039 3048                          cpi displayTemp, 8
-00003a f091                          breq case_8
-00003b 3049                          cpi displayTemp, 9
-00003c f091                          breq case_9
+000011 3040                      	cpi regAuxiliar, 0
+000012 f091                      	breq case_0
+000013 3041                      	cpi regAuxiliar, 1
+000014 f091                      	breq case_1
+000015 3042                      	cpi regAuxiliar, 2
+000016 f091                      	breq case_2
+000017 3043                      	cpi regAuxiliar, 3
+000018 f091                      	breq case_3
+000019 3044                      	cpi regAuxiliar, 4
+00001a f091                      	breq case_4
+00001b 3045                      	cpi regAuxiliar, 5
+00001c f091                      	breq case_5
+00001d 3046                      	cpi regAuxiliar, 6
+00001e f091                      	breq case_6
+00001f 3047                      	cpi regAuxiliar, 7
+000020 f091                      	breq case_7
+000021 3048                      	cpi regAuxiliar, 8
+000022 f091                      	breq case_8
+000023 3049                      	cpi regAuxiliar, 9
+000024 f091                      	breq case_9
                                  
+                                 ; ----------------------------------------------------
+                                 ; Sub-rotina: Verifica o valor de regAuxiliar e
+                                 ;             carrega o valor correspondente em regAuxiliar
+                                 ; Entradas:
+                                 ;   - regAuxiliar: Número de 0 a 9
+                                 ; Saídas:
+                                 ;   - regAuxiliar: Valor correspondente para o display
+                                 ; ----------------------------------------------------
                                  case_0:
-00003d e040                          ldi displayTemp, 0x00
-00003e c012                          rjmp fim_case
+000025 e040                      	ldi regAuxiliar, 0x00
+000026 c012                      	rjmp fim_case
                                  case_1:
-00003f e840                          ldi displayTemp, 0x80
-000040 c010                          rjmp fim_case
+000027 e840                      	ldi regAuxiliar, 0x80
+000028 c010                      	rjmp fim_case
                                  case_2:
-000041 e440                          ldi displayTemp, 0x40
-000042 c00e                          rjmp fim_case
+000029 e440                      	ldi regAuxiliar, 0x40
+00002a c00e                      	rjmp fim_case
                                  case_3:
-000043 ec40                          ldi displayTemp, 0xC0
-000044 c00c                          rjmp fim_case
+00002b ec40                      	ldi regAuxiliar, 0xC0
+00002c c00c                      	rjmp fim_case
                                  case_4:
-000045 e240                          ldi displayTemp, 0x20
-000046 c00a                          rjmp fim_case
+00002d e240                      	ldi regAuxiliar, 0x20
+00002e c00a                      	rjmp fim_case
                                  case_5:
-000047 ea40                          ldi displayTemp, 0xA0
-000048 c008                          rjmp fim_case
+00002f ea40                      	ldi regAuxiliar, 0xA0
+000030 c008                      	rjmp fim_case
                                  case_6:
-000049 e640                          ldi displayTemp, 0x60
-00004a c006                          rjmp fim_case
+000031 e640                      	ldi regAuxiliar, 0x60
+000032 c006                      	rjmp fim_case
                                  case_7:
-00004b ee40                          ldi displayTemp, 0xe0
-00004c c004                          rjmp fim_case
+000033 ee40                      	ldi regAuxiliar, 0xe0
+000034 c004                      	rjmp fim_case
                                  case_8:
-00004d e140                          ldi displayTemp, 0x10
-00004e c002                          rjmp fim_case
+000035 e140                      	ldi regAuxiliar, 0x10
+000036 c002                      	rjmp fim_case
                                  case_9:
-00004f e940                          ldi displayTemp, 0x90
-000050 c000                          rjmp fim_case
+000037 e940                      	ldi regAuxiliar, 0x90
+000038 c000                      	rjmp fim_case
                                  
                                  fim_case:
-000051 9508                          ret
+000039 9508                      	ret
+                                 
                                  
                                  ; ----------------------------------------------------
-                                 ; Sub-rotina: Divide r20 por 100, 10 e obtém os dígitos
+                                 ; Sub-rotina: Divide regAuxiliar por 100, 10 e obtém os dígitos
                                  ;             de centena, dezena e unidade.
                                  ; Entradas:
-                                 ;   - r20: Número de 8 bits (0-255)
+                                 ;   - regAuxiliar: Número de 8 bits (0-255)
                                  ; Saídas:
-                                 ;   - r22: Dígito das centenas
-                                 ;   - r23: Dígito das dezenas
-                                 ;   - r24: Dígito das unidades
+                                 ;   - centena: Dígito das centenas
+                                 ;   - dezena: Dígito das dezenas
+                                 ;   - unidade: Dígito das unidades
                                  ; ----------------------------------------------------
                                  break_digits:
-000052 2766                          clr centena
-000053 2777                          clr dezena
-000054 2788                          clr unidade
-                                     ; Calcula o dígito das centenas
-000055 e694                          ldi divisor, 100
-                                 centena_loop_h:
-000056 30f1                          cpi ZH, 1
-000057 f424                          brge centena_loop_L
-000058 97f2                          sbiw ZH:ZL, 50
-000059 97f2                      	sbiw ZH:ZL, 50
-00005a 9563                          inc centena
-00005b cffa                          rjmp centena_loop_h
+                                     ; Inicializa os registradores de saída
+00003a 2766                          clr centena  ; Centenas
+00003b 2777                          clr dezena  ; Dezenas
+00003c 2788                          clr unidade  ; Unidades
                                  
-                                 centena_loop_L:
-00005c 17e9                          cp ZL, divisor
-00005d f018                          brlo calcula_dezena
-00005e 1be9                          sub ZL, divisor
-00005f 9563                          inc centena
-000060 cffb                          rjmp centena_loop_L
+                                     ; Calcula o dígito das centenas
+00003d e694                          ldi divisor, 100
+                                 centena_loop:
+00003e 1749                          cp regAuxiliar, divisor
+00003f f018                          brlo calcula_dezena
+000040 1b49                          sub regAuxiliar, divisor
+000041 9563                          inc centena
+000042 cffb                          rjmp centena_loop
                                  
                                  calcula_dezena:
                                      ; Calcula o dígito das dezenas
-000061 e09a                          ldi divisor, 10
+000043 e09a                          ldi divisor, 10
                                  dezena_loop:
-000062 17e9                          cp ZL, divisor
-000063 f018                          brlo calcula_unidade
-000064 1be9                          sub ZL, divisor
-000065 9573                          inc dezena
-000066 cffb                          rjmp dezena_loop
+000044 1749                          cp regAuxiliar, divisor
+000045 f018                          brlo calcula_unidade
+000046 1b49                          sub regAuxiliar, divisor
+000047 9573                          inc dezena
+000048 cffb                          rjmp dezena_loop
                                  
                                  calcula_unidade:
-                                     ; O valor restante em r20 é o dígito das unidades
-000067 2f8e                          mov unidade, ZL
-000068 9508                          ret
+                                     ; O valor restante em regAuxiliar é o dígito das unidades
+000049 2f84                          mov unidade, regAuxiliar
+00004a 9508                          ret
                                  
                                  mostrar_digitos:
-000069 e000                          ldi timerCounter, 0
+00004b e000                      	ldi regCounter, 0
                                  
                                  counter:
-00006a 9503                          inc timerCounter
+00004c 9503                      	inc regCounter
                                      ; Mostra CENTENA
-00006b 2f46                          mov displayTemp, centena        ; centena = centena
-00006c dfbc                          rcall verifica
-00006d b94b                          out PORTD, displayTemp      ; valor direto nos bits baixos, assume PORTD4-7 conectados corretamente
-00006e 9a28                          sbi PORTB, 0      ; ativa TJ1 (centena)
-00006f 985b                          cbi PORTD, 3
-000070 985a                          cbi PORTD, 2
-000071 d014                          rcall espera_curta
-000072 9828                          cbi PORTB, 0        ; desliga TJ1
+00004d 2f46                          mov regAuxiliar, centena        
+00004e dfc2                      	rcall verifica
+00004f b94b                          out PORTD, regAuxiliar      ; valor direto nos bits baixos, assume PORTD4-7 conectados corretamente
+000050 9a28                          sbi PORTB, 0      ; ativa TJ1 (centena)
+000051 985b                      	cbi PORTD, 3
+000052 985a                      	cbi PORTD, 2
+000053 d014                          rcall espera_curta
+000054 9828                          cbi PORTB, 0        ; desliga TJ1
                                  
                                      ; Mostra DEZENA
-000073 2f47                          mov displayTemp, dezena        ; dezena = dezena
-000074 dfb4                          rcall verifica
-000075 b94b                          out PORTD, displayTemp
-000076 9a5b                          sbi PORTD, 3        ; ativa TJ2 (dezena)
-000077 9828                          cbi PORTB, 0
-000078 985a                          cbi PORTD, 2
-000079 d00c                          rcall espera_curta
-00007a 985b                          cbi PORTD, 3        ; desliga TJ2
+000055 2f47                          mov regAuxiliar, dezena        
+000056 dfba                      	rcall verifica
+000057 b94b                          out PORTD, regAuxiliar
+000058 9a5b                          sbi PORTD, 3        ; ativa TJ2 (dezena)
+000059 9828                      	cbi PORTB, 0
+00005a 985a                      	cbi PORTD, 2
+00005b d00c                          rcall espera_curta
+00005c 985b                          cbi PORTD, 3        ; desliga TJ2
                                  
                                      ; Mostra UNIDADE
-00007b 2f48                          mov displayTemp, unidade        ; unidade = unidade
-00007c dfac                          rcall verifica
-00007d b94b                          out PORTD, displayTemp
-00007e 9a5a                          sbi PORTD, 2        ; ativa TJ3 (unidade)
-00007f 9828                          cbi PORTB, 0
-000080 985b                          cbi PORTD, 3 
-000081 d004                          rcall espera_curta
-000082 985a                          cbi PORTD, 2        ; desliga TJ3
-000083 3203                          cpi timerCounter, 35    ; branch para counter:
-000084 f328                          brlo counter
-000085 9508                          ret
+00005d 2f48                          mov regAuxiliar, unidade        
+00005e dfb2                      	rcall verifica
+00005f b94b                          out PORTD, regAuxiliar
+000060 9a5a                          sbi PORTD, 2        ; ativa TJ3 (unidade)
+000061 9828                      	cbi PORTB, 0
+000062 985b                      	cbi PORTD, 3 
+000063 d004                          rcall espera_curta
+000064 985a                          cbi PORTD, 2        ; desliga TJ3
+000065 3203                      	cpi regCounter, 35	; branch para counter:
+000066 f328                      	brlo counter
+000067 9508                          ret
                                  
                                  espera_curta:
-000086 e6a4                          ldi XL, 100
-000087 e0b0                          ldi XH, 0
+000068 e6a4                          ldi XL, 100
+000069 e0b0                          ldi XH, 0
                                  delay_loop:
-000088 95ba                          dec XH
-000089 30b0                          cpi XH, 0
-00008a f7e9                          brne delay_loop
+00006a 95ba                          dec XH
+00006b 30b0                          cpi XH, 0
+00006c f7e9                          brne delay_loop
                                  
-00008b 95aa                          dec XL
-00008c 30a0                          cpi XL, 0
-00008d f7d1                          brne delay_loop
+00006d 95aa                          dec XL
+00006e 30a0                          cpi XL, 0
+00006f f7d1                          brne delay_loop
                                  
-00008e 9508                          ret
+000070 9508                          ret
 
 
 RESOURCE USE INFORMATION
@@ -1293,39 +1257,39 @@ counted separately from r26..r31 here.
 .dseg memory usage only counts static data declared with .byte
 
 "ATmega328P" register use summary:
-x  :   0 y  :   0 z  :   0 r0 :   2 r1 :   2 r2 :   2 r3 :   2 r4 :   2 
-r5 :   0 r6 :   2 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:   3 r17:   8 r18:   4 r19:   0 r20:  26 
-r21:   0 r22:   4 r23:   3 r24:   3 r25:   6 r26:   3 r27:   3 r28:   0 
-r29:   0 r30:  11 r31:   7 
-Registers used: 18 out of 35 (51.4%)
+x  :   0 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
+r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
+r13:   0 r14:   0 r15:   0 r16:   3 r17:   0 r18:   0 r19:   0 r20:  31 
+r21:   0 r22:   3 r23:   3 r24:   3 r25:   6 r26:   3 r27:   3 r28:   0 
+r29:   0 r30:   0 r31:   0 
+Registers used: 8 out of 35 (22.9%)
 
 "ATmega328P" instruction use summary:
-.lds  :   0 .sts  :   0 adc   :   1 add   :   1 adiw  :   0 and   :   0 
+.lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
 andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
-brcc  :   0 brcs  :   0 break :   0 breq  :  10 brge  :   1 brhc  :   0 
-brhs  :   0 brid  :   0 brie  :   0 brlo  :   5 brlt  :   0 brmi  :   0 
+brcc  :   0 brcs  :   0 break :   0 breq  :  10 brge  :   0 brhc  :   0 
+brhs  :   0 brid  :   0 brie  :   0 brlo  :   3 brlt  :   0 brmi  :   0 
 brne  :   2 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
 brvs  :   0 bset  :   0 bst   :   0 call  :   0 cbi   :  12 cbr   :   0 
 clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   3 cls   :   0 
-clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   4 cpc   :   0 
-cpi   :  14 cpse  :   0 dec   :   2 eor   :   0 fmul  :   0 fmuls :   0 
-fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   4 jmp   :   0 
-ld    :   0 ldd   :   0 ldi   :  23 lds   :   0 lpm   :   0 lsl   :   0 
-lsr   :   0 mov   :  12 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
+clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   2 cpc   :   0 
+cpi   :  13 cpse  :   0 dec   :   2 eor   :   0 fmul  :   0 fmuls :   0 
+fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   3 jmp   :   0 
+ld    :   0 ldd   :   0 ldi   :  15 lds   :   0 lpm   :   0 lsl   :   0 
+lsr   :   0 mov   :   4 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :   3 pop   :   0 
-push  :   0 rcall :   7 ret   :   4 reti  :   0 rjmp  :  17 rol   :   0 
+push  :   0 rcall :   7 ret   :   4 reti  :   0 rjmp  :  14 rol   :   0 
 ror   :   0 sbc   :   0 sbci  :   0 sbi   :  14 sbic  :   0 sbis  :   0 
-sbiw  :   2 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 seh   :   0 
+sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 seh   :   0 
 sei   :   0 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
 sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 sts   :   0 
 sub   :   2 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
-Instructions used: 21 out of 113 (18.6%)
+Instructions used: 17 out of 113 (15.0%)
 
 "ATmega328P" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x00011e    286      0    286   32768   0.9%
+[.cseg] 0x000000 0x0000e2    226      0    226   32768   0.7%
 [.dseg] 0x000100 0x000100      0      0      0    2048   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 

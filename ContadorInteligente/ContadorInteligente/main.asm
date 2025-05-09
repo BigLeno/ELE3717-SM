@@ -1,19 +1,10 @@
 .include "m328pdef.inc"
 
 ; Nomeação de registradores
-.def passo = r0
-.def minl = r1
-.def minH = r2
-.def maxL = r3
-.def maxH = r4
-.def modo = r5
-.def zeroCounter = r6
-.def timerCounter = r16 
-.def tempInputL = r17
-.def tempInputH = r18 
-.def displayTemp = r20 
+.def regCounter = r16
+.def regAuxiliar = r20
 .def centena = r22
-.def dezena = r23 
+.def dezena = r23
 .def unidade = r24
 .def divisor = r25
 
@@ -51,185 +42,158 @@ setup:
     cbi DDRC, 2;
     cbi DDRC, 3;
 
-    ; Define os padrões de Fábrica
-    ldi tempInputL, 0x00
-    mov zeroCounter, tempInputL
-    ldi tempInputL, 0x01
-    mov passo, tempInputL
-    ldi tempInputL, 0x00
-    ldi tempInputH, 0x00
-    mov minL, tempInputL
-    mov minH, tempInputH
-    ldi tempInputL, 0x03
-    ldi tempInputH, 0xE7
-    mov maxL, tempInputL
-    mov maxH, tempInputH
-
-
 main_loop:
 
-	ldi ZH, 0x03
-	ldi ZL, 0xE0
 
 	rcall break_digits
 
 	rjmp main_loop
 
-contador_init:
-    mov ZL, minL
-    mov ZH, minH
 
-contador_loop:
-    add ZL, passo
-    adc ZH, zeroCounter
-
-    cp ZL, maxL
-    brlo continua
-    cp ZH, maxH
-    brlo continua
-    rjmp contador_init
-
-continua:
-    rjmp contador_loop
-
+; ----------------------------------------------------
+; Verificação de casos de dígitos, inversão de bits
+; ----------------------------------------------------
 verifica:
-    cpi displayTemp, 0
-    breq case_0
-    cpi displayTemp, 1
-    breq case_1
-    cpi displayTemp, 2
-    breq case_2
-    cpi displayTemp, 3
-    breq case_3
-    cpi displayTemp, 4
-    breq case_4
-    cpi displayTemp, 5
-    breq case_5
-    cpi displayTemp, 6
-    breq case_6
-    cpi displayTemp, 7
-    breq case_7
-    cpi displayTemp, 8
-    breq case_8
-    cpi displayTemp, 9
-    breq case_9
+	cpi regAuxiliar, 0
+	breq case_0
+	cpi regAuxiliar, 1
+	breq case_1
+	cpi regAuxiliar, 2
+	breq case_2
+	cpi regAuxiliar, 3
+	breq case_3
+	cpi regAuxiliar, 4
+	breq case_4
+	cpi regAuxiliar, 5
+	breq case_5
+	cpi regAuxiliar, 6
+	breq case_6
+	cpi regAuxiliar, 7
+	breq case_7
+	cpi regAuxiliar, 8
+	breq case_8
+	cpi regAuxiliar, 9
+	breq case_9
 
+; ----------------------------------------------------
+; Sub-rotina: Verifica o valor de regAuxiliar e
+;             carrega o valor correspondente em regAuxiliar
+; Entradas:
+;   - regAuxiliar: Número de 0 a 9
+; Saídas:
+;   - regAuxiliar: Valor correspondente para o display
+; ----------------------------------------------------
 case_0:
-    ldi displayTemp, 0x00
-    rjmp fim_case
+	ldi regAuxiliar, 0x00
+	rjmp fim_case
 case_1:
-    ldi displayTemp, 0x80
-    rjmp fim_case
+	ldi regAuxiliar, 0x80
+	rjmp fim_case
 case_2:
-    ldi displayTemp, 0x40
-    rjmp fim_case
+	ldi regAuxiliar, 0x40
+	rjmp fim_case
 case_3:
-    ldi displayTemp, 0xC0
-    rjmp fim_case
+	ldi regAuxiliar, 0xC0
+	rjmp fim_case
 case_4:
-    ldi displayTemp, 0x20
-    rjmp fim_case
+	ldi regAuxiliar, 0x20
+	rjmp fim_case
 case_5:
-    ldi displayTemp, 0xA0
-    rjmp fim_case
+	ldi regAuxiliar, 0xA0
+	rjmp fim_case
 case_6:
-    ldi displayTemp, 0x60
-    rjmp fim_case
+	ldi regAuxiliar, 0x60
+	rjmp fim_case
 case_7:
-    ldi displayTemp, 0xe0
-    rjmp fim_case
+	ldi regAuxiliar, 0xe0
+	rjmp fim_case
 case_8:
-    ldi displayTemp, 0x10
-    rjmp fim_case
+	ldi regAuxiliar, 0x10
+	rjmp fim_case
 case_9:
-    ldi displayTemp, 0x90
-    rjmp fim_case
+	ldi regAuxiliar, 0x90
+	rjmp fim_case
 
 fim_case:
-    ret
+	ret
+
 
 ; ----------------------------------------------------
-; Sub-rotina: Divide r20 por 100, 10 e obtém os dígitos
+; Sub-rotina: Divide regAuxiliar por 100, 10 e obtém os dígitos
 ;             de centena, dezena e unidade.
 ; Entradas:
-;   - r20: Número de 8 bits (0-255)
+;   - regAuxiliar: Número de 8 bits (0-255)
 ; Saídas:
-;   - r22: Dígito das centenas
-;   - r23: Dígito das dezenas
-;   - r24: Dígito das unidades
+;   - centena: Dígito das centenas
+;   - dezena: Dígito das dezenas
+;   - unidade: Dígito das unidades
 ; ----------------------------------------------------
 break_digits:
-    clr centena
-    clr dezena
-    clr unidade
+    ; Inicializa os registradores de saída
+    clr centena  ; Centenas
+    clr dezena  ; Dezenas
+    clr unidade  ; Unidades
+
     ; Calcula o dígito das centenas
     ldi divisor, 100
-centena_loop_h:
-    cpi ZH, 1
-    brge centena_loop_L
-    sbiw ZH:ZL, 50
-	sbiw ZH:ZL, 50
-    inc centena
-    rjmp centena_loop_h
-
-centena_loop_L:
-    cp ZL, divisor
+centena_loop:
+    cp regAuxiliar, divisor
     brlo calcula_dezena
-    sub ZL, divisor
+    sub regAuxiliar, divisor
     inc centena
-    rjmp centena_loop_L
+    rjmp centena_loop
 
 calcula_dezena:
     ; Calcula o dígito das dezenas
     ldi divisor, 10
 dezena_loop:
-    cp ZL, divisor
+    cp regAuxiliar, divisor
     brlo calcula_unidade
-    sub ZL, divisor
+    sub regAuxiliar, divisor
     inc dezena
     rjmp dezena_loop
 
 calcula_unidade:
-    ; O valor restante em r20 é o dígito das unidades
-    mov unidade, ZL
+    ; O valor restante em regAuxiliar é o dígito das unidades
+    mov unidade, regAuxiliar
     ret
 
 mostrar_digitos:
-    ldi timerCounter, 0
+	ldi regCounter, 0
 
 counter:
-    inc timerCounter
+	inc regCounter
     ; Mostra CENTENA
-    mov displayTemp, centena        ; centena = centena
-    rcall verifica
-    out PORTD, displayTemp      ; valor direto nos bits baixos, assume PORTD4-7 conectados corretamente
+    mov regAuxiliar, centena        
+	rcall verifica
+    out PORTD, regAuxiliar      ; valor direto nos bits baixos, assume PORTD4-7 conectados corretamente
     sbi PORTB, 0      ; ativa TJ1 (centena)
-    cbi PORTD, 3
-    cbi PORTD, 2
+	cbi PORTD, 3
+	cbi PORTD, 2
     rcall espera_curta
     cbi PORTB, 0        ; desliga TJ1
 
     ; Mostra DEZENA
-    mov displayTemp, dezena        ; dezena = dezena
-    rcall verifica
-    out PORTD, displayTemp
+    mov regAuxiliar, dezena        
+	rcall verifica
+    out PORTD, regAuxiliar
     sbi PORTD, 3        ; ativa TJ2 (dezena)
-    cbi PORTB, 0
-    cbi PORTD, 2
+	cbi PORTB, 0
+	cbi PORTD, 2
     rcall espera_curta
     cbi PORTD, 3        ; desliga TJ2
 
     ; Mostra UNIDADE
-    mov displayTemp, unidade        ; unidade = unidade
-    rcall verifica
-    out PORTD, displayTemp
+    mov regAuxiliar, unidade        
+	rcall verifica
+    out PORTD, regAuxiliar
     sbi PORTD, 2        ; ativa TJ3 (unidade)
-    cbi PORTB, 0
-    cbi PORTD, 3 
+	cbi PORTB, 0
+	cbi PORTD, 3 
     rcall espera_curta
     cbi PORTD, 2        ; desliga TJ3
-    cpi timerCounter, 35    ; branch para counter:
-    brlo counter
+	cpi regCounter, 35	; branch para counter:
+	brlo counter
     ret
 
 espera_curta:

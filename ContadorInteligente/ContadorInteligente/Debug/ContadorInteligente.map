@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Mon Apr 14 20:15:22 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Fri May 09 19:19:54 2025
 
 
 EQU  SIGNATURE_000 0000001e
@@ -695,45 +695,32 @@ EQU  ACIaddr      0000002e
 EQU  TWIaddr      00000030
 EQU  SPMRaddr     00000032
 EQU  INT_VECTORS_SIZE 00000034
-DEF  passo        r0
-DEF  minl         r1
-DEF  minH         r2
-DEF  maxL         r3
-DEF  maxH         r4
-DEF  modo         r5
-DEF  zeroCounter  r6
-DEF  timerCounter r16
-DEF  tempInputL   r17
-DEF  tempInputH   r18
-DEF  displayTemp  r20
+DEF  regCounter   r16
+DEF  regAuxiliar  r20
 DEF  centena      r22
 DEF  dezena       r23
 DEF  unidade      r24
 DEF  divisor      r25
 CSEG setup        00000001
-CSEG main_loop    0000001b
-CSEG break_digits 00000052
-CSEG contador_init 0000001f
-CSEG contador_loop 00000021
-CSEG continua     00000028
-CSEG verifica     00000029
-CSEG case_0       0000003d
-CSEG case_1       0000003f
-CSEG case_2       00000041
-CSEG case_3       00000043
-CSEG case_4       00000045
-CSEG case_5       00000047
-CSEG case_6       00000049
-CSEG case_7       0000004b
-CSEG case_8       0000004d
-CSEG case_9       0000004f
-CSEG fim_case     00000051
-CSEG centena_loop_h 00000056
-CSEG centena_loop_L 0000005c
-CSEG calcula_dezena 00000061
-CSEG dezena_loop  00000062
-CSEG calcula_unidade 00000067
-CSEG mostrar_digitos 00000069
-CSEG counter      0000006a
-CSEG espera_curta 00000086
-CSEG delay_loop   00000088
+CSEG main_loop    0000000f
+CSEG break_digits 0000003a
+CSEG verifica     00000011
+CSEG case_0       00000025
+CSEG case_1       00000027
+CSEG case_2       00000029
+CSEG case_3       0000002b
+CSEG case_4       0000002d
+CSEG case_5       0000002f
+CSEG case_6       00000031
+CSEG case_7       00000033
+CSEG case_8       00000035
+CSEG case_9       00000037
+CSEG fim_case     00000039
+CSEG centena_loop 0000003e
+CSEG calcula_dezena 00000043
+CSEG dezena_loop  00000044
+CSEG calcula_unidade 00000049
+CSEG mostrar_digitos 0000004b
+CSEG counter      0000004c
+CSEG espera_curta 00000068
+CSEG delay_loop   0000006a
