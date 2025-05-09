@@ -3,6 +3,7 @@
 ; Nomeação de registradores
 .def regCounter = r16
 .def regMinMaxStep = r17
+.def regPot = r18
 .def regAuxiliar = r20
 .def centena = r22
 .def dezena = r23
@@ -40,7 +41,14 @@ setup:
     sbi DDRB, 3 ; LED Vermelho
 
     ; Configura pino do potenciometro
-    sbi DDRC, 0 ; Potenciômetro
+    cbi DDRC, 0 ; Potenciômetro
+
+    ldi     r26, 0x60
+	sts     ADMUX, r26   ; defina AVcc como referencia e ajuste a esquerda             
+	ldi     r26, 0x00
+	sts     ADCSRB, r26  ; defina o modo de trigger free running		
+	ldi     r26, 0x87    
+	sts     ADCSRA, r26  ; habilite o adc e utilize uma pre-escala de 128
 
     ; Habilita interrupção por mudança no pino PC1 (PCINT9)
     ldi r26, (1 << PCIE1)   ; Habilita PCI1 (Port C) no PCICR
@@ -64,8 +72,6 @@ main_loop:
 
 
 checa_botao_pc2:
-    ; sbrs r30, 1
-    ; rjmp checa_botao_pc3
 
     inc regMinMaxStep ; Incrementa o valor de regMinMaxStep
 
@@ -120,7 +126,9 @@ set_add_min:
     cbi PORTB, 1 ; Desliga o LED azul
     sbi PORTB, 3 ; Liga o LED vermelho
     
-    ldi r31, 0x01
+    call Radc ; Chama a rotina de leitura do ADC
+    mov r31, regPot ; Armazena o valor lido no registrador auxiliar
+
     rjmp atualiza_display
 set_add_max:
     cbi PORTB, 3 ; Desliga o LED vermelho
@@ -330,3 +338,20 @@ delay_loop:
     brne delay_loop
 
     ret
+
+Radc:   
+	ldi     regpot, 0xC7    
+	sts     ADCSRA,regpot   ; inicie a conversao 
+
+loop_adc:
+	lds     regpot, ADCSRA  ; carregue no registrador regpot o valor de ADCSRA
+	sbrs    regpot, ADIF    ; verifique se o processo de conversao finalizou
+	rjmp    loop_adc 
+    cpi regMinMaxStep, 0x03
+    breq adc_step
+    lds    regpot, ADCL    ; carregue o valor (H) do conversor ad no registrador 22
+    ret
+
+adc_step:
+	lds     regpot, ADCH    ; carregue o valor (H) do conversor ad no registrador 22
+	ret                  ; retorne
