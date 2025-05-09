@@ -2,6 +2,7 @@
 
 ; Nomeação de registradores
 .def regCounter = r16
+.def regMinMaxStep = r17
 .def regAuxiliar = r20
 .def centena = r22
 .def dezena = r23
@@ -12,7 +13,11 @@
 .org 0x000
     rjmp setup             ; Ponto de entrada
 
-; 0x03E7 -> 999
+; ----------------------------------------------------
+; Vetor de Interrupção PCI1 (Pin Change Interrupt 1 - Port C)
+; ----------------------------------------------------
+.org PCI1addr            ; Endereço do vetor de interrupção PCI1
+    rjmp PCINT1_ISR      ; Salta para a rotina de serviço
 
 ; ----------------------------------------------------
 ; Setup: Configuração inicial dos pinos e memória
@@ -30,24 +35,140 @@ setup:
     sbi DDRD, 7 ; HX3
 
     ; Configura pinos do led rgb
-    sbi DDRB, 1 ; LED vermelho
-    sbi DDRB, 2 ; LED verde
-    sbi DDRB, 3 ; LED azul
+    sbi DDRB, 1 ; LED Azul
+    sbi DDRB, 2 ; LED Verde
+    sbi DDRB, 3 ; LED Vermelho
 
     ; Configura pino do potenciometro
     sbi DDRC, 0 ; Potenciômetro
 
-    ; Configura pinos do botão
-    cbi DDRC, 1;
-    cbi DDRC, 2;
-    cbi DDRC, 3;
+    ; Habilita interrupção por mudança no pino PC1 (PCINT9)
+    ldi r26, (1 << PCIE1)   ; Habilita PCI1 (Port C) no PCICR
+    sts PCICR, r26
+    ldi r26, (1 << PCINT9) | (1 << PCINT10) | (1 << PCINT11)  ; Habilita PCINT9, PCINT10, PCINT11 (PC1, PC2, PC3)
+    sts PCMSK1, r26
+
+    sei                     ; Habilita interrupções globais
+
+    clr r30                 ; Inicializa flag de interrupção (bit 0)
+    ldi r31, 0x00
+    ldi regMinMaxStep, 0x00 ; Inicializa o registrador de controle
+
 
 main_loop:
+    sbrc r30, 1            ; Se flag de interrupção não estiver setada, continua
+    rjmp checa_botao_pc2
+
+	
+    rjmp atualiza_display
 
 
-	rcall break_digits
+checa_botao_pc2:
+    ; sbrs r30, 1
+    ; rjmp checa_botao_pc3
 
-	rjmp main_loop
+    inc regMinMaxStep ; Incrementa o valor de regMinMaxStep
+
+    cpi regMinMaxStep, 0x01 ; Modo: Ajustar Min
+    breq set_add_min
+    cpi regMinMaxStep, 0x02 ; Modo: Ajustar Max
+    breq set_add_max
+    cpi regMinMaxStep, 0x03 ; Modo: Ajustar Step
+    breq set_add_step
+    cpi regMinMaxStep, 0x04 ; Modo: Resetar
+    breq reset_regMinMaxStep
+    
+
+checa_botao_pc3:
+    sbrs r30, 2              ; Verifica se PC3 foi pressionado
+    rjmp exibe_default
+    
+    
+
+atualiza_display:
+    clr r30                  ; Limpa todos os bits de flag
+    mov regAuxiliar, r31
+    rcall exibe_display
+
+    rjmp main_loop
+
+exibe_default:
+    mov regAuxiliar, r31
+    rcall exibe_display
+    rjmp main_loop
+
+exibe_display:
+    rcall break_digits       ; Divide em centenas, dezenas, unidades
+    rcall mostrar_digitos    ; Exibe no display
+    ret
+
+; ; ----------------------------------------------------
+; ; Rotina de verificação de Min, Max e Step
+; ; ----------------------------------------------------
+
+reset_regMinMaxStep:
+    ldi regMinMaxStep, 0x00 ; Reseta o registrador de controle
+    cbi PORTB, 1 ; Desliga o LED azul
+    cbi PORTB, 2 ; Desliga o LED verde
+    cbi PORTB, 3 ; Desliga o LED vermelho
+
+    ldi r31, 0x00
+    rjmp atualiza_display
+
+set_add_min:
+    cbi PORTB, 2 ; Desliga o LED verde
+    cbi PORTB, 1 ; Desliga o LED azul
+    sbi PORTB, 3 ; Liga o LED vermelho
+    
+    ldi r31, 0x01
+    rjmp atualiza_display
+set_add_max:
+    cbi PORTB, 3 ; Desliga o LED vermelho
+    cbi PORTB, 1 ; Desliga o LED azul
+    sbi PORTB, 2 ; Liga o LED verde
+
+    ldi r31, 0x02
+
+    rjmp atualiza_display
+
+set_add_step:
+    cbi PORTB, 2 ; Desliga o LED verde
+    cbi PORTB, 3 ; Desliga o LED vermelho
+    sbi PORTB, 1 ; Liga o LED azul
+
+    ldi r31, 0x03
+
+    rjmp atualiza_display
+
+; ----------------------------------------------------
+; Rotina de Serviço de Interrupção (ISR) para PCINT1
+; ----------------------------------------------------
+PCINT1_ISR:
+    push r26
+    in r26, SREG
+    push r26
+
+    ; Verifica PC1 (botão de medir)
+    sbis PINC, PC1
+    sbr r30, (1 << 0)    ; seta bit 0
+
+    ; Verifica PC2
+    sbis PINC, PC2
+    sbr r30, (1 << 1)    ; seta bit 1
+
+    ; Verifica PC3
+    sbis PINC, PC3
+    sbr r30, (1 << 2)    ; seta bit 2
+
+    pop r26
+    out SREG, r26
+    pop r26
+    reti
+fim_isr:
+    pop r26
+    out SREG, r26
+    pop r26
+    reti
 
 
 ; ----------------------------------------------------

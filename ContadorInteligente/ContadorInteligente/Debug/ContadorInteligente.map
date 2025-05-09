@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Fri May 09 19:19:54 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Fri May 09 20:37:07 2025
 
 
 EQU  SIGNATURE_000 0000001e
@@ -696,31 +696,43 @@ EQU  TWIaddr      00000030
 EQU  SPMRaddr     00000032
 EQU  INT_VECTORS_SIZE 00000034
 DEF  regCounter   r16
+DEF  regMinMaxStep r17
 DEF  regAuxiliar  r20
 DEF  centena      r22
 DEF  dezena       r23
 DEF  unidade      r24
 DEF  divisor      r25
-CSEG setup        00000001
-CSEG main_loop    0000000f
-CSEG break_digits 0000003a
-CSEG verifica     00000011
-CSEG case_0       00000025
-CSEG case_1       00000027
-CSEG case_2       00000029
-CSEG case_3       0000002b
-CSEG case_4       0000002d
-CSEG case_5       0000002f
-CSEG case_6       00000031
-CSEG case_7       00000033
-CSEG case_8       00000035
-CSEG case_9       00000037
-CSEG fim_case     00000039
-CSEG centena_loop 0000003e
-CSEG calcula_dezena 00000043
-CSEG dezena_loop  00000044
-CSEG calcula_unidade 00000049
-CSEG mostrar_digitos 0000004b
-CSEG counter      0000004c
-CSEG espera_curta 00000068
-CSEG delay_loop   0000006a
+CSEG setup        00000009
+CSEG PCINT1_ISR   0000004b
+CSEG main_loop    0000001e
+CSEG checa_botao_pc2 00000021
+CSEG atualiza_display 0000002c
+CSEG set_add_min  0000003c
+CSEG set_add_max  00000041
+CSEG set_add_step 00000046
+CSEG reset_regMinMaxStep 00000036
+CSEG checa_botao_pc3 0000002a
+CSEG exibe_default 00000030
+CSEG exibe_display 00000033
+CSEG break_digits 00000085
+CSEG mostrar_digitos 00000096
+CSEG fim_isr      00000058
+CSEG verifica     0000005c
+CSEG case_0       00000070
+CSEG case_1       00000072
+CSEG case_2       00000074
+CSEG case_3       00000076
+CSEG case_4       00000078
+CSEG case_5       0000007a
+CSEG case_6       0000007c
+CSEG case_7       0000007e
+CSEG case_8       00000080
+CSEG case_9       00000082
+CSEG fim_case     00000084
+CSEG centena_loop 00000089
+CSEG calcula_dezena 0000008e
+CSEG dezena_loop  0000008f
+CSEG calcula_unidade 00000094
+CSEG counter      00000097
+CSEG espera_curta 000000b3
+CSEG delay_loop   000000b5
