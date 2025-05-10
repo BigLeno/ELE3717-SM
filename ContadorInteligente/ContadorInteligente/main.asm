@@ -4,7 +4,9 @@
 .def regCounter = r16
 .def regMinMaxStep = r17
 .def regPot = r18
+.def min = r19
 .def regAuxiliar = r20
+.def max = r21
 .def centena = r22
 .def dezena = r23
 .def unidade = r24
@@ -61,19 +63,23 @@ setup:
     clr r30                 ; Inicializa flag de interrupção (bit 0)
     ldi r31, 0x00
     ldi regMinMaxStep, 0x00 ; Inicializa o registrador de controle
+    ldi r28, 0x00
 
 
 main_loop:
+    sbrc r30, 0            ; Verifica se a flag de interrupção está setada
+    rcall incrementador ; Se sim, chama a rotina de mudança de direção
     sbrc r30, 1            ; Se flag de interrupção não estiver setada, continua
-    rjmp checa_botao_pc2
+    rjmp set_min_max_step
+    sbrc r30, 2            ; Verifica se a flag de interrupção está setada
+    rcall decrementador ; Se sim, chama a rotina de mudança de direção
 
 	
     rjmp atualiza_display
 
 
-checa_botao_pc2:
 
-    
+set_min_max_step:
 
     cpi regMinMaxStep, 0x01 ; Modo: Ajustar Min
     breq set_add_min
@@ -85,19 +91,25 @@ checa_botao_pc2:
     breq reset_regMinMaxStep
     
 
-checa_botao_pc3:
-    sbrs r30, 2              ; Verifica se PC3 foi pressionado
-    rjmp exibe_default
-    
-    
+incrementador:
+    ldi r28, 0x00
+    ldi r31, 0x03
+    ret
 
+decrementador:
+    ldi r28, 0x01
+    ldi r31, 0x06
+    ret
+
+
+    
 atualiza_display:
     clr r30                  ; Limpa todos os bits de flag
     mov regAuxiliar, r31
     rcall exibe_display
 
     cpi regMinMaxStep, 0x00 ; Verifica se o modo é de ajuste
-    brne checa_botao_pc2 ; Se não for, continua no loop principal
+    brne set_min_max_step ; Se não for, continua no loop principal
 
     rjmp main_loop
 
@@ -130,7 +142,10 @@ set_add_min:
     sbi PORTB, 3 ; Liga o LED vermelho
     call Radc ; Chama a rotina de leitura do ADC
     mov r31, regPot ; Armazena o valor lido no registrador auxiliar
+    mov min, regPot ; Armazena o valor lido no registrador auxiliar
+
     rjmp atualiza_display
+
 set_add_max:
     cbi PORTB, 3 ; Desliga o LED vermelho
     cbi PORTB, 1 ; Desliga o LED azul
@@ -138,6 +153,7 @@ set_add_max:
 
     call Radc ; Chama a rotina de leitura do ADC
     mov r31, regPot ; Armazena o valor lido no registrador auxiliar
+    mov max, regPot ; Armazena o valor lido no registrador auxiliar
 
     rjmp atualiza_display
 
@@ -152,6 +168,7 @@ set_add_step:
     lsr regPot ; Divide o valor lido por 2
     lsr regPot ; Divide o valor lido por 2
     mov r31, regPot ; Armazena o valor lido no registrador auxiliar
+    mov r27, regPot ; Armazena o valor lido no registrador auxiliar
 
     rjmp atualiza_display
 

@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Fri May 09 21:15:48 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Fri May 09 21:25:33 2025
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
 C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328pdef.inc'
@@ -1035,7 +1035,9 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
                                  .def regCounter = r16
                                  .def regMinMaxStep = r17
                                  .def regPot = r18
+                                 .def min = r19
                                  .def regAuxiliar = r20
+                                 .def max = r21
                                  .def centena = r22
                                  .def dezena = r23
                                  .def unidade = r24
@@ -1049,7 +1051,7 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
                                  ; Vetor de Interrupção PCI1 (Pin Change Interrupt 1 - Port C)
                                  ; ----------------------------------------------------
                                  .org PCI1addr            ; Endereço do vetor de interrupção PCI1
-000008 c056                          rjmp PCINT1_ISR      ; Salta para a rotina de serviço
+000008 c062                          rjmp PCINT1_ISR      ; Salta para a rotina de serviço
                                  
                                  ; ----------------------------------------------------
                                  ; Setup: Configuração inicial dos pinos e memória
@@ -1092,160 +1094,173 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
 000024 27ee                          clr r30                 ; Inicializa flag de interrupção (bit 0)
 000025 e0f0                          ldi r31, 0x00
 000026 e010                          ldi regMinMaxStep, 0x00 ; Inicializa o registrador de controle
+000027 e0c0                          ldi r28, 0x00
                                  
                                  
                                  main_loop:
-000027 fde1                          sbrc r30, 1            ; Se flag de interrupção não estiver setada, continua
-000028 c001                          rjmp checa_botao_pc2
+000028 fde0                          sbrc r30, 0            ; Verifica se a flag de interrupção está setada
+000029 d00d                          rcall incrementador ; Se sim, chama a rotina de mudança de direção
+00002a fde1                          sbrc r30, 1            ; Se flag de interrupção não estiver setada, continua
+00002b c003                          rjmp set_min_max_step
+00002c fde2                          sbrc r30, 2            ; Verifica se a flag de interrupção está setada
+00002d d00c                          rcall decrementador ; Se sim, chama a rotina de mudança de direção
                                  
                                  	
-000029 c00a                          rjmp atualiza_display
+00002e c00e                          rjmp atualiza_display
                                  
                                  
-                                 checa_botao_pc2:
                                  
+                                 set_min_max_step:
+                                 
+00002f 3011                          cpi regMinMaxStep, 0x01 ; Modo: Ajustar Min
+000030 f0f1                          breq set_add_min
+000031 3012                          cpi regMinMaxStep, 0x02 ; Modo: Ajustar Max
+000032 f121                          breq set_add_max
+000033 3013                          cpi regMinMaxStep, 0x03 ; Modo: Ajustar Step
+000034 f151                          breq set_add_step
+000035 3014                          cpi regMinMaxStep, 0x04 ; Modo: Resetar
+000036 f091                          breq reset_regMinMaxStep
                                      
                                  
-00002a 3011                          cpi regMinMaxStep, 0x01 ; Modo: Ajustar Min
-00002b f0d1                          breq set_add_min
-00002c 3012                          cpi regMinMaxStep, 0x02 ; Modo: Ajustar Max
-00002d f0f9                          breq set_add_max
-00002e 3013                          cpi regMinMaxStep, 0x03 ; Modo: Ajustar Step
-00002f f121                          breq set_add_step
-000030 3014                          cpi regMinMaxStep, 0x04 ; Modo: Resetar
-000031 f071                          breq reset_regMinMaxStep
-                                     
+                                 incrementador:
+000037 e0c0                          ldi r28, 0x00
+000038 e0f3                          ldi r31, 0x03
+000039 9508                          ret
                                  
-                                 checa_botao_pc3:
-000032 ffe2                          sbrs r30, 2              ; Verifica se PC3 foi pressionado
-000033 c006                          rjmp exibe_default
+                                 decrementador:
+00003a e0c1                          ldi r28, 0x01
+00003b e0f6                          ldi r31, 0x06
+00003c 9508                          ret
                                      
-                                     
-                                 
                                  atualiza_display:
-000034 27ee                          clr r30                  ; Limpa todos os bits de flag
-000035 2f4f                          mov regAuxiliar, r31
-000036 d006                          rcall exibe_display
+00003d 27ee                          clr r30                  ; Limpa todos os bits de flag
+00003e 2f4f                          mov regAuxiliar, r31
+00003f d006                          rcall exibe_display
                                  
-000037 3010                          cpi regMinMaxStep, 0x00 ; Verifica se o modo é de ajuste
-000038 f789                          brne checa_botao_pc2 ; Se não for, continua no loop principal
+000040 3010                          cpi regMinMaxStep, 0x00 ; Verifica se o modo é de ajuste
+000041 f769                          brne set_min_max_step ; Se não for, continua no loop principal
                                  
-000039 cfed                          rjmp main_loop
+000042 cfe5                          rjmp main_loop
                                  
                                  exibe_default:
-00003a 2f4f                          mov regAuxiliar, r31
-00003b d001                          rcall exibe_display
-00003c cfea                          rjmp main_loop
+000043 2f4f                          mov regAuxiliar, r31
+000044 d001                          rcall exibe_display
+000045 cfe2                          rjmp main_loop
                                  
                                  exibe_display:
-00003d d05f                          rcall break_digits       ; Divide em centenas, dezenas, unidades
-00003e d06f                          rcall mostrar_digitos    ; Exibe no display
-00003f 9508                          ret
+000046 d062                          rcall break_digits       ; Divide em centenas, dezenas, unidades
+000047 d072                          rcall mostrar_digitos    ; Exibe no display
+000048 9508                          ret
                                  
                                  ; ; ----------------------------------------------------
                                  ; ; Rotina de verificação de Min, Max e Step
                                  ; ; ----------------------------------------------------
                                  
                                  reset_regMinMaxStep:
-000040 e010                          ldi regMinMaxStep, 0x00 ; Reseta o registrador de controle
-000041 9829                          cbi PORTB, 1 ; Desliga o LED azul
-000042 982a                          cbi PORTB, 2 ; Desliga o LED verde
-000043 982b                          cbi PORTB, 3 ; Desliga o LED vermelho
+000049 e010                          ldi regMinMaxStep, 0x00 ; Reseta o registrador de controle
+00004a 9829                          cbi PORTB, 1 ; Desliga o LED azul
+00004b 982a                          cbi PORTB, 2 ; Desliga o LED verde
+00004c 982b                          cbi PORTB, 3 ; Desliga o LED vermelho
                                  
-000044 e0f0                          ldi r31, 0x00
-000045 cfee                          rjmp atualiza_display
+00004d e0f0                          ldi r31, 0x00
+00004e cfee                          rjmp atualiza_display
                                  
                                  set_add_min:
-000046 982a                          cbi PORTB, 2 ; Desliga o LED verde
-000047 9829                          cbi PORTB, 1 ; Desliga o LED azul
-000048 9a2b                          sbi PORTB, 3 ; Liga o LED vermelho
-000049 940e 00d4                     call Radc ; Chama a rotina de leitura do ADC
-00004b 2ff2                          mov r31, regPot ; Armazena o valor lido no registrador auxiliar
-00004c cfe7                          rjmp atualiza_display
+00004f 982a                          cbi PORTB, 2 ; Desliga o LED verde
+000050 9829                          cbi PORTB, 1 ; Desliga o LED azul
+000051 9a2b                          sbi PORTB, 3 ; Liga o LED vermelho
+000052 940e 00e0                     call Radc ; Chama a rotina de leitura do ADC
+000054 2ff2                          mov r31, regPot ; Armazena o valor lido no registrador auxiliar
+000055 2f32                          mov min, regPot ; Armazena o valor lido no registrador auxiliar
+                                 
+000056 cfe6                          rjmp atualiza_display
+                                 
                                  set_add_max:
-00004d 982b                          cbi PORTB, 3 ; Desliga o LED vermelho
-00004e 9829                          cbi PORTB, 1 ; Desliga o LED azul
-00004f 9a2a                          sbi PORTB, 2 ; Liga o LED verde
+000057 982b                          cbi PORTB, 3 ; Desliga o LED vermelho
+000058 9829                          cbi PORTB, 1 ; Desliga o LED azul
+000059 9a2a                          sbi PORTB, 2 ; Liga o LED verde
                                  
-000050 940e 00d4                     call Radc ; Chama a rotina de leitura do ADC
-000052 2ff2                          mov r31, regPot ; Armazena o valor lido no registrador auxiliar
+00005a 940e 00e0                     call Radc ; Chama a rotina de leitura do ADC
+00005c 2ff2                          mov r31, regPot ; Armazena o valor lido no registrador auxiliar
+00005d 2f52                          mov max, regPot ; Armazena o valor lido no registrador auxiliar
                                  
-000053 cfe0                          rjmp atualiza_display
+00005e cfde                          rjmp atualiza_display
                                  
                                  set_add_step:
-000054 982a                          cbi PORTB, 2 ; Desliga o LED verde
-000055 982b                          cbi PORTB, 3 ; Desliga o LED vermelho
-000056 9a29                          sbi PORTB, 1 ; Liga o LED azul
+00005f 982a                          cbi PORTB, 2 ; Desliga o LED verde
+000060 982b                          cbi PORTB, 3 ; Desliga o LED vermelho
+000061 9a29                          sbi PORTB, 1 ; Liga o LED azul
                                  
-000057 940e 00d4                     call Radc ; Chama a rotina de leitura do ADC
-000059 9526                          lsr regPot ; Divide o valor lido por 2
-00005a 9526                          lsr regPot ; Divide o valor lido por 2
-00005b 9526                          lsr regPot ; Divide o valor lido por 2
-00005c 9526                          lsr regPot ; Divide o valor lido por 2
-00005d 2ff2                          mov r31, regPot ; Armazena o valor lido no registrador auxiliar
+000062 940e 00e0                     call Radc ; Chama a rotina de leitura do ADC
+000064 9526                          lsr regPot ; Divide o valor lido por 2
+000065 9526                          lsr regPot ; Divide o valor lido por 2
+000066 9526                          lsr regPot ; Divide o valor lido por 2
+000067 9526                          lsr regPot ; Divide o valor lido por 2
+000068 2ff2                          mov r31, regPot ; Armazena o valor lido no registrador auxiliar
+000069 2fb2                          mov r27, regPot ; Armazena o valor lido no registrador auxiliar
                                  
-00005e cfd5                          rjmp atualiza_display
+00006a cfd2                          rjmp atualiza_display
                                  
                                  ; ----------------------------------------------------
                                  ; Rotina de Serviço de Interrupção (ISR) para PCINT1
                                  ; ----------------------------------------------------
                                  PCINT1_ISR:
-00005f 93af                          push r26
-000060 b7af                          in r26, SREG
-000061 93af                          push r26
+00006b 93af                          push r26
+00006c b7af                          in r26, SREG
+00006d 93af                          push r26
                                  
                                      ; Verifica PC1 (botão de medir)
-000062 9b31                          sbis PINC, PC1
-000063 60e1                          sbr r30, (1 << 0)    ; seta bit 0
+00006e 9b31                          sbis PINC, PC1
+00006f 60e1                          sbr r30, (1 << 0)    ; seta bit 0
                                  
                                      ; Verifica PC2
-000064 9b32                          sbis PINC, PC2
-000065 940e 0071                     call pc2_interrupt
+000070 9b32                          sbis PINC, PC2
+000071 940e 007d                     call pc2_interrupt
                                  
                                      ; Verifica PC3
-000067 9b33                          sbis PINC, PC3
-000068 60e4                          sbr r30, (1 << 2)    ; seta bit 2
+000073 9b33                          sbis PINC, PC3
+000074 60e4                          sbr r30, (1 << 2)    ; seta bit 2
                                  
-000069 91af                          pop r26
-00006a bfaf                          out SREG, r26
-00006b 91af                          pop r26
-00006c 9518                          reti
+000075 91af                          pop r26
+000076 bfaf                          out SREG, r26
+000077 91af                          pop r26
+000078 9518                          reti
                                  fim_isr:
-00006d 91af                          pop r26
-00006e bfaf                          out SREG, r26
-00006f 91af                          pop r26
-000070 9518                          reti
+000079 91af                          pop r26
+00007a bfaf                          out SREG, r26
+00007b 91af                          pop r26
+00007c 9518                          reti
                                  
                                  pc2_interrupt:
-000071 60e2                          sbr r30, (1 << 1)    ; seta bit 1
-000072 9513                          inc regMinMaxStep ; Incrementa o modo de ajuste
-000073 9508                          ret
+00007d 60e2                          sbr r30, (1 << 1)    ; seta bit 1
+00007e 9513                          inc regMinMaxStep ; Incrementa o modo de ajuste
+00007f 9508                          ret
                                  
                                  
                                  ; ----------------------------------------------------
                                  ; Verificação de casos de dígitos, inversão de bits
                                  ; ----------------------------------------------------
                                  verifica:
-000074 3040                      	cpi regAuxiliar, 0
-000075 f091                      	breq case_0
-000076 3041                      	cpi regAuxiliar, 1
-000077 f091                      	breq case_1
-000078 3042                      	cpi regAuxiliar, 2
-000079 f091                      	breq case_2
-00007a 3043                      	cpi regAuxiliar, 3
-00007b f091                      	breq case_3
-00007c 3044                      	cpi regAuxiliar, 4
-00007d f091                      	breq case_4
-00007e 3045                      	cpi regAuxiliar, 5
-00007f f091                      	breq case_5
-000080 3046                      	cpi regAuxiliar, 6
-000081 f091                      	breq case_6
-000082 3047                      	cpi regAuxiliar, 7
-000083 f091                      	breq case_7
-000084 3048                      	cpi regAuxiliar, 8
-000085 f091                      	breq case_8
-000086 3049                      	cpi regAuxiliar, 9
-000087 f091                      	breq case_9
+000080 3040                      	cpi regAuxiliar, 0
+000081 f091                      	breq case_0
+000082 3041                      	cpi regAuxiliar, 1
+000083 f091                      	breq case_1
+000084 3042                      	cpi regAuxiliar, 2
+000085 f091                      	breq case_2
+000086 3043                      	cpi regAuxiliar, 3
+000087 f091                      	breq case_3
+000088 3044                      	cpi regAuxiliar, 4
+000089 f091                      	breq case_4
+00008a 3045                      	cpi regAuxiliar, 5
+00008b f091                      	breq case_5
+00008c 3046                      	cpi regAuxiliar, 6
+00008d f091                      	breq case_6
+00008e 3047                      	cpi regAuxiliar, 7
+00008f f091                      	breq case_7
+000090 3048                      	cpi regAuxiliar, 8
+000091 f091                      	breq case_8
+000092 3049                      	cpi regAuxiliar, 9
+000093 f091                      	breq case_9
                                  
                                  ; ----------------------------------------------------
                                  ; Sub-rotina: Verifica o valor de regAuxiliar e
@@ -1256,38 +1271,38 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
                                  ;   - regAuxiliar: Valor correspondente para o display
                                  ; ----------------------------------------------------
                                  case_0:
-000088 e040                      	ldi regAuxiliar, 0x00
-000089 c012                      	rjmp fim_case
+000094 e040                      	ldi regAuxiliar, 0x00
+000095 c012                      	rjmp fim_case
                                  case_1:
-00008a e840                      	ldi regAuxiliar, 0x80
-00008b c010                      	rjmp fim_case
+000096 e840                      	ldi regAuxiliar, 0x80
+000097 c010                      	rjmp fim_case
                                  case_2:
-00008c e440                      	ldi regAuxiliar, 0x40
-00008d c00e                      	rjmp fim_case
+000098 e440                      	ldi regAuxiliar, 0x40
+000099 c00e                      	rjmp fim_case
                                  case_3:
-00008e ec40                      	ldi regAuxiliar, 0xC0
-00008f c00c                      	rjmp fim_case
+00009a ec40                      	ldi regAuxiliar, 0xC0
+00009b c00c                      	rjmp fim_case
                                  case_4:
-000090 e240                      	ldi regAuxiliar, 0x20
-000091 c00a                      	rjmp fim_case
+00009c e240                      	ldi regAuxiliar, 0x20
+00009d c00a                      	rjmp fim_case
                                  case_5:
-000092 ea40                      	ldi regAuxiliar, 0xA0
-000093 c008                      	rjmp fim_case
+00009e ea40                      	ldi regAuxiliar, 0xA0
+00009f c008                      	rjmp fim_case
                                  case_6:
-000094 e640                      	ldi regAuxiliar, 0x60
-000095 c006                      	rjmp fim_case
+0000a0 e640                      	ldi regAuxiliar, 0x60
+0000a1 c006                      	rjmp fim_case
                                  case_7:
-000096 ee40                      	ldi regAuxiliar, 0xe0
-000097 c004                      	rjmp fim_case
+0000a2 ee40                      	ldi regAuxiliar, 0xe0
+0000a3 c004                      	rjmp fim_case
                                  case_8:
-000098 e140                      	ldi regAuxiliar, 0x10
-000099 c002                      	rjmp fim_case
+0000a4 e140                      	ldi regAuxiliar, 0x10
+0000a5 c002                      	rjmp fim_case
                                  case_9:
-00009a e940                      	ldi regAuxiliar, 0x90
-00009b c000                      	rjmp fim_case
+0000a6 e940                      	ldi regAuxiliar, 0x90
+0000a7 c000                      	rjmp fim_case
                                  
                                  fim_case:
-00009c 9508                      	ret
+0000a8 9508                      	ret
                                  
                                  
                                  ; ----------------------------------------------------
@@ -1302,95 +1317,95 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
                                  ; ----------------------------------------------------
                                  break_digits:
                                      ; Inicializa os registradores de saída
-00009d 2766                          clr centena  ; Centenas
-00009e 2777                          clr dezena  ; Dezenas
-00009f 2788                          clr unidade  ; Unidades
+0000a9 2766                          clr centena  ; Centenas
+0000aa 2777                          clr dezena  ; Dezenas
+0000ab 2788                          clr unidade  ; Unidades
                                  
                                      ; Calcula o dígito das centenas
-0000a0 e694                          ldi divisor, 100
+0000ac e694                          ldi divisor, 100
                                  centena_loop:
-0000a1 1749                          cp regAuxiliar, divisor
-0000a2 f018                          brlo calcula_dezena
-0000a3 1b49                          sub regAuxiliar, divisor
-0000a4 9563                          inc centena
-0000a5 cffb                          rjmp centena_loop
+0000ad 1749                          cp regAuxiliar, divisor
+0000ae f018                          brlo calcula_dezena
+0000af 1b49                          sub regAuxiliar, divisor
+0000b0 9563                          inc centena
+0000b1 cffb                          rjmp centena_loop
                                  
                                  calcula_dezena:
                                      ; Calcula o dígito das dezenas
-0000a6 e09a                          ldi divisor, 10
+0000b2 e09a                          ldi divisor, 10
                                  dezena_loop:
-0000a7 1749                          cp regAuxiliar, divisor
-0000a8 f018                          brlo calcula_unidade
-0000a9 1b49                          sub regAuxiliar, divisor
-0000aa 9573                          inc dezena
-0000ab cffb                          rjmp dezena_loop
+0000b3 1749                          cp regAuxiliar, divisor
+0000b4 f018                          brlo calcula_unidade
+0000b5 1b49                          sub regAuxiliar, divisor
+0000b6 9573                          inc dezena
+0000b7 cffb                          rjmp dezena_loop
                                  
                                  calcula_unidade:
                                      ; O valor restante em regAuxiliar é o dígito das unidades
-0000ac 2f84                          mov unidade, regAuxiliar
-0000ad 9508                          ret
+0000b8 2f84                          mov unidade, regAuxiliar
+0000b9 9508                          ret
                                  
                                  mostrar_digitos:
-0000ae e000                      	ldi regCounter, 0
+0000ba e000                      	ldi regCounter, 0
                                  
                                  counter:
-0000af 9503                      	inc regCounter
+0000bb 9503                      	inc regCounter
                                      ; Mostra CENTENA
-0000b0 2f46                          mov regAuxiliar, centena        
-0000b1 dfc2                      	rcall verifica
-0000b2 b94b                          out PORTD, regAuxiliar      ; valor direto nos bits baixos, assume PORTD4-7 conectados corretamente
-0000b3 9a28                          sbi PORTB, 0      ; ativa TJ1 (centena)
-0000b4 985b                      	cbi PORTD, 3
-0000b5 985a                      	cbi PORTD, 2
-0000b6 d014                          rcall espera_curta
-0000b7 9828                          cbi PORTB, 0        ; desliga TJ1
+0000bc 2f46                          mov regAuxiliar, centena        
+0000bd dfc2                      	rcall verifica
+0000be b94b                          out PORTD, regAuxiliar      ; valor direto nos bits baixos, assume PORTD4-7 conectados corretamente
+0000bf 9a28                          sbi PORTB, 0      ; ativa TJ1 (centena)
+0000c0 985b                      	cbi PORTD, 3
+0000c1 985a                      	cbi PORTD, 2
+0000c2 d014                          rcall espera_curta
+0000c3 9828                          cbi PORTB, 0        ; desliga TJ1
                                  
                                      ; Mostra DEZENA
-0000b8 2f47                          mov regAuxiliar, dezena        
-0000b9 dfba                      	rcall verifica
-0000ba b94b                          out PORTD, regAuxiliar
-0000bb 9a5b                          sbi PORTD, 3        ; ativa TJ2 (dezena)
-0000bc 9828                      	cbi PORTB, 0
-0000bd 985a                      	cbi PORTD, 2
-0000be d00c                          rcall espera_curta
-0000bf 985b                          cbi PORTD, 3        ; desliga TJ2
+0000c4 2f47                          mov regAuxiliar, dezena        
+0000c5 dfba                      	rcall verifica
+0000c6 b94b                          out PORTD, regAuxiliar
+0000c7 9a5b                          sbi PORTD, 3        ; ativa TJ2 (dezena)
+0000c8 9828                      	cbi PORTB, 0
+0000c9 985a                      	cbi PORTD, 2
+0000ca d00c                          rcall espera_curta
+0000cb 985b                          cbi PORTD, 3        ; desliga TJ2
                                  
                                      ; Mostra UNIDADE
-0000c0 2f48                          mov regAuxiliar, unidade        
-0000c1 dfb2                      	rcall verifica
-0000c2 b94b                          out PORTD, regAuxiliar
-0000c3 9a5a                          sbi PORTD, 2        ; ativa TJ3 (unidade)
-0000c4 9828                      	cbi PORTB, 0
-0000c5 985b                      	cbi PORTD, 3 
-0000c6 d004                          rcall espera_curta
-0000c7 985a                          cbi PORTD, 2        ; desliga TJ3
-0000c8 3203                      	cpi regCounter, 35	; branch para counter:
-0000c9 f328                      	brlo counter
-0000ca 9508                          ret
+0000cc 2f48                          mov regAuxiliar, unidade        
+0000cd dfb2                      	rcall verifica
+0000ce b94b                          out PORTD, regAuxiliar
+0000cf 9a5a                          sbi PORTD, 2        ; ativa TJ3 (unidade)
+0000d0 9828                      	cbi PORTB, 0
+0000d1 985b                      	cbi PORTD, 3 
+0000d2 d004                          rcall espera_curta
+0000d3 985a                          cbi PORTD, 2        ; desliga TJ3
+0000d4 3203                      	cpi regCounter, 35	; branch para counter:
+0000d5 f328                      	brlo counter
+0000d6 9508                          ret
                                  
                                  espera_curta:
-0000cb e6a4                          ldi XL, 100
-0000cc e0b0                          ldi XH, 0
+0000d7 e6a4                          ldi XL, 100
+0000d8 e0b0                          ldi XH, 0
                                  delay_loop:
-0000cd 95ba                          dec XH
-0000ce 30b0                          cpi XH, 0
-0000cf f7e9                          brne delay_loop
+0000d9 95ba                          dec XH
+0000da 30b0                          cpi XH, 0
+0000db f7e9                          brne delay_loop
                                  
-0000d0 95aa                          dec XL
-0000d1 30a0                          cpi XL, 0
-0000d2 f7d1                          brne delay_loop
+0000dc 95aa                          dec XL
+0000dd 30a0                          cpi XL, 0
+0000de f7d1                          brne delay_loop
                                  
-0000d3 9508                          ret
+0000df 9508                          ret
                                  
                                  Radc:   
-0000d4 ec27                      	ldi     regpot, 0xC7    
-0000d5 9320 007a                 	sts     ADCSRA,regpot   ; inicie a conversao 
+0000e0 ec27                      	ldi     regpot, 0xC7    
+0000e1 9320 007a                 	sts     ADCSRA,regpot   ; inicie a conversao 
                                  
                                  loop_adc:
-0000d7 9120 007a                 	lds     regpot, ADCSRA  ; carregue no registrador regpot o valor de ADCSRA
-0000d9 ff24                      	sbrs    regpot, ADIF    ; verifique se o processo de conversao finalizou
-0000da cffc                      	rjmp    loop_adc 
-0000db 9120 0079                 	lds     regpot, ADCH    ; carregue o valor (H) do conversor ad no registrador 22
+0000e3 9120 007a                 	lds     regpot, ADCSRA  ; carregue no registrador regpot o valor de ADCSRA
+0000e5 ff24                      	sbrs    regpot, ADIF    ; verifique se o processo de conversao finalizou
+0000e6 cffc                      	rjmp    loop_adc 
+0000e7 9120 0079                 	lds     regpot, ADCH    ; carregue o valor (H) do conversor ad no registrador 22
 
 
 RESOURCE USE INFORMATION
@@ -1410,10 +1425,10 @@ counted separately from r26..r31 here.
 "ATmega328P" register use summary:
 x  :   0 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:   3 r17:   8 r18:  12 r19:   0 r20:  33 
-r21:   0 r22:   3 r23:   3 r24:   3 r25:   6 r26:  22 r27:   3 r28:   0 
-r29:   0 r30:   7 r31:   7 
-Registers used: 12 out of 35 (34.3%)
+r13:   0 r14:   0 r15:   0 r16:   3 r17:   8 r18:  15 r19:   1 r20:  33 
+r21:   1 r22:   3 r23:   3 r24:   3 r25:   6 r26:  22 r27:   4 r28:   3 
+r29:   0 r30:   8 r31:   9 
+Registers used: 15 out of 35 (42.9%)
 
 "ATmega328P" instruction use summary:
 .lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
@@ -1426,12 +1441,12 @@ clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   5 cls   :   0
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   2 cpc   :   0 
 cpi   :  18 cpse  :   0 dec   :   2 eor   :   0 fmul  :   0 fmuls :   0 
 fmulsu:   0 icall :   0 ijmp  :   0 in    :   1 inc   :   4 jmp   :   0 
-ld    :   0 ldd   :   0 ldi   :  25 lds   :   2 lpm   :   0 lsl   :   0 
-lsr   :   4 mov   :   9 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
+ld    :   0 ldd   :   0 ldi   :  30 lds   :   2 lpm   :   0 lsl   :   0 
+lsr   :   4 mov   :  12 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :   5 pop   :   4 
-push  :   2 rcall :  10 ret   :   7 reti  :   2 rjmp  :  24 rol   :   0 
+push  :   2 rcall :  12 ret   :   9 reti  :   2 rjmp  :  23 rol   :   0 
 ror   :   0 sbc   :   0 sbci  :   0 sbi   :  16 sbic  :   0 sbis  :   3 
-sbiw  :   0 sbr   :   3 sbrc  :   1 sbrs  :   2 sec   :   0 seh   :   0 
+sbiw  :   0 sbr   :   3 sbrc  :   3 sbrs  :   1 sec   :   0 seh   :   0 
 sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
 sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 sts   :   6 
 sub   :   2 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
@@ -1440,7 +1455,7 @@ Instructions used: 30 out of 113 (26.5%)
 "ATmega328P" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x0001bc    430      0    430   32768   1.3%
+[.cseg] 0x000000 0x0001d4    454      0    454   32768   1.4%
 [.dseg] 0x000100 0x000100      0      0      0    2048   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 
