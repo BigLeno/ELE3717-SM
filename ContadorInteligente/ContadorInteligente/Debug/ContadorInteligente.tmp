@@ -24,41 +24,41 @@
  </OUTPUT_FILES>
  <LABELS>
   <setup><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>26</LINE></setup>
-  <PCINT1_ISR><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>154</LINE></PCINT1_ISR>
+  <PCINT1_ISR><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>161</LINE></PCINT1_ISR>
   <main_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>66</LINE></main_loop>
   <checa_botao_pc2><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>74</LINE></checa_botao_pc2>
   <atualiza_display><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>94</LINE></atualiza_display>
-  <set_add_min><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>124</LINE></set_add_min>
-  <set_add_max><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>133</LINE></set_add_max>
-  <set_add_step><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>142</LINE></set_add_step>
-  <reset_regMinMaxStep><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>115</LINE></reset_regMinMaxStep>
+  <set_add_min><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>127</LINE></set_add_min>
+  <set_add_max><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>134</LINE></set_add_max>
+  <set_add_step><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>144</LINE></set_add_step>
+  <reset_regMinMaxStep><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>118</LINE></reset_regMinMaxStep>
   <checa_botao_pc3><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>88</LINE></checa_botao_pc3>
-  <exibe_default><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>101</LINE></exibe_default>
-  <exibe_display><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>106</LINE></exibe_display>
-  <break_digits><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>260</LINE></break_digits>
-  <mostrar_digitos><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>290</LINE></mostrar_digitos>
-  <Radc><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>342</LINE></Radc>
-  <fim_isr><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>175</LINE></fim_isr>
-  <verifica><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>185</LINE></verifica>
-  <case_0><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>215</LINE></case_0>
-  <case_1><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>218</LINE></case_1>
-  <case_2><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>221</LINE></case_2>
-  <case_3><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>224</LINE></case_3>
-  <case_4><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>227</LINE></case_4>
-  <case_5><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>230</LINE></case_5>
-  <case_6><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>233</LINE></case_6>
-  <case_7><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>236</LINE></case_7>
-  <case_8><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>239</LINE></case_8>
-  <case_9><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>242</LINE></case_9>
-  <fim_case><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>246</LINE></fim_case>
-  <centena_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>268</LINE></centena_loop>
-  <calcula_dezena><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>275</LINE></calcula_dezena>
-  <dezena_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>278</LINE></dezena_loop>
-  <calcula_unidade><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>285</LINE></calcula_unidade>
-  <counter><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>293</LINE></counter>
-  <espera_curta><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>328</LINE></espera_curta>
-  <delay_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>331</LINE></delay_loop>
-  <loop_adc><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>346</LINE></loop_adc>
-  <adc_step><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>355</LINE></adc_step>
+  <exibe_default><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>104</LINE></exibe_default>
+  <exibe_display><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>109</LINE></exibe_display>
+  <break_digits><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>272</LINE></break_digits>
+  <mostrar_digitos><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>302</LINE></mostrar_digitos>
+  <Radc><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>354</LINE></Radc>
+  <pc2_interrupt><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>188</LINE></pc2_interrupt>
+  <fim_isr><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>182</LINE></fim_isr>
+  <verifica><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>197</LINE></verifica>
+  <case_0><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>227</LINE></case_0>
+  <case_1><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>230</LINE></case_1>
+  <case_2><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>233</LINE></case_2>
+  <case_3><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>236</LINE></case_3>
+  <case_4><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>239</LINE></case_4>
+  <case_5><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>242</LINE></case_5>
+  <case_6><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>245</LINE></case_6>
+  <case_7><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>248</LINE></case_7>
+  <case_8><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>251</LINE></case_8>
+  <case_9><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>254</LINE></case_9>
+  <fim_case><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>258</LINE></fim_case>
+  <centena_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>280</LINE></centena_loop>
+  <calcula_dezena><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>287</LINE></calcula_dezena>
+  <dezena_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>290</LINE></dezena_loop>
+  <calcula_unidade><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>297</LINE></calcula_unidade>
+  <counter><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>305</LINE></counter>
+  <espera_curta><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>340</LINE></espera_curta>
+  <delay_loop><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>343</LINE></delay_loop>
+  <loop_adc><FILE>C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm</FILE><LINE>358</LINE></loop_adc>
  </LABELS>
 </ASSEMBLER_INFO>

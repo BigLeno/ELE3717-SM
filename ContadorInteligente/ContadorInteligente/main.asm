@@ -73,7 +73,7 @@ main_loop:
 
 checa_botao_pc2:
 
-    inc regMinMaxStep ; Incrementa o valor de regMinMaxStep
+    
 
     cpi regMinMaxStep, 0x01 ; Modo: Ajustar Min
     breq set_add_min
@@ -95,6 +95,9 @@ atualiza_display:
     clr r30                  ; Limpa todos os bits de flag
     mov regAuxiliar, r31
     rcall exibe_display
+
+    cpi regMinMaxStep, 0x00 ; Verifica se o modo é de ajuste
+    brne checa_botao_pc2 ; Se não for, continua no loop principal
 
     rjmp main_loop
 
@@ -125,17 +128,16 @@ set_add_min:
     cbi PORTB, 2 ; Desliga o LED verde
     cbi PORTB, 1 ; Desliga o LED azul
     sbi PORTB, 3 ; Liga o LED vermelho
-    
     call Radc ; Chama a rotina de leitura do ADC
     mov r31, regPot ; Armazena o valor lido no registrador auxiliar
-
     rjmp atualiza_display
 set_add_max:
     cbi PORTB, 3 ; Desliga o LED vermelho
     cbi PORTB, 1 ; Desliga o LED azul
     sbi PORTB, 2 ; Liga o LED verde
 
-    ldi r31, 0x02
+    call Radc ; Chama a rotina de leitura do ADC
+    mov r31, regPot ; Armazena o valor lido no registrador auxiliar
 
     rjmp atualiza_display
 
@@ -144,7 +146,12 @@ set_add_step:
     cbi PORTB, 3 ; Desliga o LED vermelho
     sbi PORTB, 1 ; Liga o LED azul
 
-    ldi r31, 0x03
+    call Radc ; Chama a rotina de leitura do ADC
+    lsr regPot ; Divide o valor lido por 2
+    lsr regPot ; Divide o valor lido por 2
+    lsr regPot ; Divide o valor lido por 2
+    lsr regPot ; Divide o valor lido por 2
+    mov r31, regPot ; Armazena o valor lido no registrador auxiliar
 
     rjmp atualiza_display
 
@@ -162,7 +169,7 @@ PCINT1_ISR:
 
     ; Verifica PC2
     sbis PINC, PC2
-    sbr r30, (1 << 1)    ; seta bit 1
+    call pc2_interrupt
 
     ; Verifica PC3
     sbis PINC, PC3
@@ -177,6 +184,11 @@ fim_isr:
     out SREG, r26
     pop r26
     reti
+
+pc2_interrupt:
+    sbr r30, (1 << 1)    ; seta bit 1
+    inc regMinMaxStep ; Incrementa o modo de ajuste
+    ret
 
 
 ; ----------------------------------------------------
@@ -347,11 +359,5 @@ loop_adc:
 	lds     regpot, ADCSRA  ; carregue no registrador regpot o valor de ADCSRA
 	sbrs    regpot, ADIF    ; verifique se o processo de conversao finalizou
 	rjmp    loop_adc 
-    cpi regMinMaxStep, 0x03
-    breq adc_step
-    lds    regpot, ADCL    ; carregue o valor (H) do conversor ad no registrador 22
-    ret
-
-adc_step:
 	lds     regpot, ADCH    ; carregue o valor (H) do conversor ad no registrador 22
 	ret                  ; retorne
