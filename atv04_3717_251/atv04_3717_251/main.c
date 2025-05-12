@@ -1,394 +1,236 @@
 #define F_CPU 16000000UL
+
 #include <avr/io.h>
-#include <avr/interrupt.h>
 #include <util/delay.h>
-#include <stdio.h>
+#include <avr/pgmspace.h>
 #include <stdbool.h>
-#include <stdint.h>
 
-/*================================================================
-  Configuração de hardware
-  ---------------------------------------------------------------
-  BOTÕES:
-    M    -> PD2  (INT0 e PCINT18)
-    ?    -> PD3  (INT1 e PCINT19)
-    ?    -> PD4  (       PCINT20)
+#define set_bit(Y, bit_x)  ((Y) |= (1 << (bit_x)))
+#define clr_bit(Y, bit_x)  ((Y) &= ~(1 << (bit_x)))
 
-  LED RGB:
-    RED   -> OC0A (PD6)   Timer0 Fast PWM 8-bit
-    GREEN -> OC1A (PB1)   Timer1 Fast PWM 8-bit (modo 3)
-    BLUE  -> OC2A (PB3)   Timer2 Fast PWM 8-bit
+// LCD 4 bits: dados nos PD4..PD7; RS=PD2, EN=PD3
+#define PORT_LCD PORTD
+#define DDR_LCD  DDRD
 
-  LCD 2×16 em modo 4-bit (porta C):
-    RS -> PC0
-    RW -> PC1
-    EN -> PC2
-    D4 -> PC3
-    D5 -> PC4
-    D6 -> PC5
-    D7 -> PC6
-  ================================================================*/
- 
-// pinos de botão
-#define BTN_M     PIND2
-#define BTN_UP    PIND3
-#define BTN_DOWN  PIND4
+#define RS PD2
+#define EN PD3
 
-// pinos LCD
-#define LCD_RS    PC0
-#define LCD_RW    PC1
-#define LCD_EN    PC2
-#define LCD_D4    PC3
-#define LCD_D5    PC4
-#define LCD_D6    PC5
-#define LCD_D7    PC6
+#define LCD_DATA_MASK ((1 << PD4) | (1 << PD5) | (1 << PD6) | (1 << PD7))
 
-// constantes de tempo (em ms)
-#define DEBOUNCE_MS     50
-#define HOLD_THR1     5000   // auto-repeat após 5s
-#define HOLD_THR2    10000   // acelera após 10s
-#define REP_INT1       500   // intervalo lento (500ms)
-#define REP_INT2       100   // intervalo rápido (100ms)
+#define BTN1_PIN PC1  // BotÃ£o para trocar canal (S1)
+#define BTN2_PIN PC2  // BotÃ£o para aumentar (S2)
+#define BTN3_PIN PC3  // BotÃ£o para diminuir (S3)
 
-// variáveis de sistema
-volatile uint8_t red_val   = 128;
-volatile uint8_t grn_val   = 128;
-volatile uint8_t blu_val   = 128;
-volatile uint8_t channel   = 0;    // 0=R,1=G,2=B
-volatile bool    lcd_update = false;
-
-// contador global de ms (systick)
-volatile uint32_t systick_ms = 0;
-
-// estados dos botões
-typedef struct {
-    bool     pressed;
-    uint32_t last_evt;     // timestamp da última transição válida
-    uint32_t hold_time;    // tempo que está pressionado
-    bool     autorep;      // entrou em modo auto-repeat?
-    uint16_t rpt_cnt;      // contagem interna para repetição
-} btn_t;
-
-volatile btn_t btnM   = {0}, btnUP = {0}, btnDN = {0};
-
-/*================================================================
-  Protótipos
-  ================================================================*/
-void pwm_init(void);
-void pwm_update(void);
+// ProtÃ³tipos
 void lcd_init(void);
-void lcd_cmd(uint8_t c);
-void lcd_data(uint8_t d);
-void lcd_goto(uint8_t linha, uint8_t col);
-void lcd_print(char *s);
-void lcd_print16(char *s);  // até 16 chars
-void lcd_refresh(void);
+void lcd_send_nibble(uint8_t val);
+void lcd_send_byte(uint8_t c, uint8_t rs);
+void lcd_clear(void);
+void lcd_goto(uint8_t linha, uint8_t coluna);
+void lcd_print(char *str);
+void lcd_print_num(uint8_t val);
+bool button_pressed(uint8_t pin);
 
-/*================================================================
-  Interrupção do SysTick (Timer1 CTC A) a cada 1 ms
-  ---------------------------------------------------------------
-  - Incrementa systick_ms
-  - Tratamento de auto-repeat de ?/?
-  ================================================================*/
-ISR(TIMER1_COMPA_vect)
+// VariÃ¡veis de controle
+volatile uint8_t red_val = 0;
+volatile uint8_t green_val = 0;
+volatile uint8_t blue_val = 0;
+volatile uint8_t seletor = 0;  // 0=RED,1=GREEN,2=BLUE
+
+// FunÃ§Ãµes LCD
+void lcd_send_nibble(uint8_t val)
 {
-    systick_ms++;
-    // ?
-    if (btnUP.pressed) {
-        btnUP.hold_time++;
-        if (btnUP.hold_time >= HOLD_THR1) {
-            btnUP.autorep = true;
-            btnUP.rpt_cnt++;
-            uint16_t thr = (btnUP.hold_time < HOLD_THR2 ? REP_INT1 : REP_INT2);
-            if (btnUP.rpt_cnt >= thr) {
-                btnUP.rpt_cnt = 0;
-                // dispara incremento
-                if (channel==0 && red_val<255)   red_val++;
-                if (channel==1 && grn_val<255)   grn_val++;
-                if (channel==2 && blu_val<255)   blu_val++;
-                pwm_update();
-                lcd_update = true;
-            }
-        }
-    }
-    // ?
-    if (btnDN.pressed) {
-        btnDN.hold_time++;
-        if (btnDN.hold_time >= HOLD_THR1) {
-            btnDN.autorep = true;
-            btnDN.rpt_cnt++;
-            uint16_t thr = (btnDN.hold_time < HOLD_THR2 ? REP_INT1 : REP_INT2);
-            if (btnDN.rpt_cnt >= thr) {
-                btnDN.rpt_cnt = 0;
-                // dispara decremento
-                if (channel==0 && red_val>0)   red_val--;
-                if (channel==1 && grn_val>0)   grn_val--;
-                if (channel==2 && blu_val>0)   blu_val--;
-                pwm_update();
-                lcd_update = true;
-            }
-        }
-    }
-}
-
-/*================================================================
-  Interrupção de PCINT2: PORTD[7:0], usamos PD2,PD3,PD4
-  ---------------------------------------------------------------
-  - Detecta bordas em M, ?, ?
-  - Debounce via software (ignora eventos em <DEBOUNCE_MS)
-  - Nó: botões são ativos-baixo (pull-up interna)
-  ================================================================*/
-ISR(PCINT2_vect)
-{
-    uint8_t pd = PIND;
-    uint32_t t = systick_ms;
-
-    // --- botão M (PD2) ---
-    if (!(pd & (1<<BTN_M))) {
-        // detecta pressão
-        if (!btnM.pressed && (t - btnM.last_evt) >= DEBOUNCE_MS) {
-            btnM.pressed    = true;
-            btnM.last_evt   = t;
-            // avança canal
-            channel = (channel+1) % 3;
-            lcd_update = true;
-        }
-    } else {
-        // detecta liberação
-        if (btnM.pressed && (t - btnM.last_evt) >= DEBOUNCE_MS) {
-            btnM.pressed  = false;
-            btnM.last_evt = t;
-        }
-    }
-
-    // --- botão ? (PD3) ---
-    if (!(pd & (1<<BTN_UP))) {
-        if (!btnUP.pressed && (t - btnUP.last_evt) >= DEBOUNCE_MS) {
-            btnUP.pressed    = true;
-            btnUP.last_evt   = t;
-            btnUP.hold_time  = 0;
-            btnUP.autorep    = false;
-            btnUP.rpt_cnt    = 0;
-            // primeiro incremento imediato
-            if (channel==0 && red_val<255)   red_val++;
-            if (channel==1 && grn_val<255)   grn_val++;
-            if (channel==2 && blu_val<255)   blu_val++;
-            pwm_update();
-            lcd_update = true;
-        }
-    } else {
-        if (btnUP.pressed && (t - btnUP.last_evt) >= DEBOUNCE_MS) {
-            btnUP.pressed    = false;
-            btnUP.last_evt   = t;
-            btnUP.hold_time  = 0;
-            btnUP.autorep    = false;
-            btnUP.rpt_cnt    = 0;
-        }
-    }
-
-    // --- botão ? (PD4) ---
-    if (!(pd & (1<<BTN_DOWN))) {
-        if (!btnDN.pressed && (t - btnDN.last_evt) >= DEBOUNCE_MS) {
-            btnDN.pressed    = true;
-            btnDN.last_evt   = t;
-            btnDN.hold_time  = 0;
-            btnDN.autorep    = false;
-            btnDN.rpt_cnt    = 0;
-            // primeiro decremento imediato
-            if (channel==0 && red_val>0)   red_val--;
-            if (channel==1 && grn_val>0)   grn_val--;
-            if (channel==2 && blu_val>0)   blu_val--;
-            pwm_update();
-            lcd_update = true;
-        }
-    } else {
-        if (btnDN.pressed && (t - btnDN.last_evt) >= DEBOUNCE_MS) {
-            btnDN.pressed    = false;
-            btnDN.last_evt   = t;
-            btnDN.hold_time  = 0;
-            btnDN.autorep    = false;
-            btnDN.rpt_cnt    = 0;
-        }
-    }
-}
-
-/*================================================================
-  Inicialização de PWM nos timers 0,1,2
-  ================================================================*/
-void pwm_init(void)
-{
-    // Timer0 Fast PWM 8bit – RED – OC0A = PD6
-    DDRD |= (1<<PD6);
-    TCCR0A = (1<<WGM00)|(1<<WGM01)|(1<<COM0A1);  // Fast PWM, non-inverting
-    TCCR0B = (1<<CS01)|(1<<CS00);               // prescaler 64
-
-    // Timer1 Fast PWM 8bit – GREEN – OC1A = PB1
-    DDRB |= (1<<PB1);
-    TCCR1A = (1<<WGM10)|(1<<WGM11)|(1<<COM1A1);
-    TCCR1B = (1<<CS11)|(1<<CS10);  // Fast PWM 8bit, prescaler 64
-
-    // Timer2 Fast PWM 8bit – BLUE – OC2A = PB3
-    DDRB |= (1<<PB3);
-    TCCR2A = (1<<WGM20)|(1<<WGM21)|(1<<COM2A1);
-    TCCR2B = (1<<CS22);            // prescaler 64
-
-    pwm_update();
-}
-
-/* atualiza valores PWM */
-void pwm_update(void)
-{
-    OCR0A = red_val;
-    OCR1AL= grn_val;
-    OCR2A = blu_val;
-}
-
-/*================================================================
-  Rotina de inicialização do SysTick (Timer1 CTC A – 1 ms)
-  ---------------------------------------------------------------
-  Usamos Timer1 em CTC A, OCR1A = 249 @ prescaler=64 em 16 MHz
-  => 1 ms de interrupção
-  ================================================================*/
-void systick_init(void)
-{
-    TCCR1A &= ~((1<<WGM11)|(1<<WGM10));  // WGM1[3:2]=00
-    TCCR1B = (1<<WGM12)|(1<<CS11)|(1<<CS10); // CTC, prescaler 64
-    OCR1A = 249;
-    TIMSK1 |= (1<<OCIE1A);
-}
-
-/*================================================================
-  Inicialização PCINT para PD2–PD4
-  ================================================================*/
-void pcint_init(void)
-{
-    PCICR |= (1<<PCIE2);      // habilita PCINT2 (PORTD)
-    PCMSK2 |= (1<<PCINT18)|(1<<PCINT19)|(1<<PCINT20);
-}
-
-/*================================================================
-  Funções básicas do LCD 2×16 em 4-bit
-  ================================================================*/
-static void lcd_strobe(void)
-{
-    PORTC |=  (1<<LCD_EN);
+    PORT_LCD &= ~LCD_DATA_MASK;       // Limpa bits D4-D7
+    PORT_LCD |= ((val << 4) & LCD_DATA_MASK);  // Posiciona nibble
+    set_bit(PORT_LCD, EN);
     _delay_us(1);
-    PORTC &= ~(1<<LCD_EN);
-    _delay_us(100);
-}
-
-/* envia meio byte */
-static void lcd_write_nibble(uint8_t nib)
-{
-    if (nib & 0x08) PORTC |=  (1<<LCD_D7); else PORTC &= ~(1<<LCD_D7);
-    if (nib & 0x04) PORTC |=  (1<<LCD_D6); else PORTC &= ~(1<<LCD_D6);
-    if (nib & 0x02) PORTC |=  (1<<LCD_D5); else PORTC &= ~(1<<LCD_D5);
-    if (nib & 0x01) PORTC |=  (1<<LCD_D4); else PORTC &= ~(1<<LCD_D4);
-    lcd_strobe();
-}
-
-/* envia comando RS=0 */
-void lcd_cmd(uint8_t c)
-{
-    PORTC &= ~(1<<LCD_RS);
-    _delay_us(1);
-    lcd_write_nibble(c>>4);
-    lcd_write_nibble(c&0x0F);
-    _delay_ms(2);
-}
-
-/* envia dado RS=1 */
-void lcd_data(uint8_t d)
-{
-    PORTC |=  (1<<LCD_RS);
-    _delay_us(1);
-    lcd_write_nibble(d>>4);
-    lcd_write_nibble(d&0x0F);
+    clr_bit(PORT_LCD, EN);
     _delay_us(40);
 }
 
-/* posiciona cursor (linha 0/1, coluna 0–15) */
-void lcd_goto(uint8_t linha, uint8_t col)
+void lcd_send_byte(uint8_t c, uint8_t rs)
 {
-    uint8_t addr = (linha==0 ? 0x00 : 0x40) + col;
-    lcd_cmd(0x80 | addr);
+    if (rs)
+        set_bit(PORT_LCD, RS);
+    else
+        clr_bit(PORT_LCD, RS);
+    lcd_send_nibble(c >> 4);
+    lcd_send_nibble(c & 0x0F);
+    if (rs == 0 && (c == 0x01 || c == 0x02)) // clear cursor commands
+        _delay_ms(2);
+    else
+        _delay_us(40);
 }
 
-/* imprime string terminada em ‘\0’ */
-void lcd_print(char *s)
-{
-    while (*s) { lcd_data(*s++); }
-}
-
-/* atualiza toda a tela com valores e “*” no canal ativo */
-void lcd_refresh(void)
-{
-    char buf1[17], buf2[17];
-    // formata linha 1: *R:XXX G:XXX
-    snprintf(buf1,16, "%cR:%3u G:%3u",
-             (channel==0?'*':' '),
-              red_val, grn_val);
-    // formata linha 2: *B:XXX
-    snprintf(buf2,16, "%cB:%3u",
-             (channel==2?'*':' '),
-             blu_val);
-    // desenha
-    lcd_cmd(0x01);        // limpa tela
-    _delay_ms(2);
-    lcd_goto(0,0);
-    lcd_print(buf1);
-    lcd_goto(1,0);
-    lcd_print(buf2);
-}
-
-/* setup inicial do LCD */
 void lcd_init(void)
 {
-    // portas como saída
-    DDRC |= (1<<LCD_RS)|(1<<LCD_RW)|(1<<LCD_EN)
-          |(1<<LCD_D4)|(1<<LCD_D5)|(1<<LCD_D6)|(1<<LCD_D7);
+    DDR_LCD |= LCD_DATA_MASK | (1 << RS) | (1 << EN);
     _delay_ms(40);
-    // init sequence 4-bit
-    PORTC &= ~(1<<LCD_RW);
-    lcd_strobe(); lcd_strobe(); lcd_strobe();
-    lcd_write_nibble(0x02);
-    lcd_cmd(0x28);  // 4-bit, 2 linhas, fonte 5×8
-    lcd_cmd(0x08);  // display off
-    lcd_cmd(0x0C);  // display on, cursor off
-    lcd_cmd(0x06);  // entrada incrementa
-    lcd_cmd(0x01);  // limpa
+    clr_bit(PORT_LCD, RS);
+
+    // Sequencia inicializaÃ§Ã£o 4bits
+    lcd_send_nibble(0x03);
+    _delay_ms(5);
+    lcd_send_nibble(0x03);
+    _delay_us(150);
+    lcd_send_nibble(0x03);
+    _delay_us(150);
+    lcd_send_nibble(0x02); // set 4-bit
+    _delay_us(150);
+    lcd_send_byte(0x28, 0); // 4-bit, 2 linhas, 5x8 fonte
+    lcd_send_byte(0x08, 0); // Display off
+    lcd_send_byte(0x01, 0); // clear display
+    _delay_ms(2);
+    lcd_send_byte(0x06, 0); // entrada incrementa, sem shift
+    lcd_send_byte(0x0C, 0); // Display ON, Cursor off, blink off
+}
+
+void lcd_clear(void)
+{
+    lcd_send_byte(0x01, 0);
     _delay_ms(2);
 }
 
-/*================================================================
-  Função principal
-  ================================================================*/
+void lcd_goto(uint8_t linha, uint8_t coluna)
+{
+    uint8_t endereco = coluna + (linha ? 0x40 : 0x00);
+    lcd_send_byte(0x80 | endereco, 0);
+}
+
+void lcd_print(char *str)
+{
+    while (*str)
+        lcd_send_byte(*str++, 1);
+}
+
+void lcd_print_num(uint8_t val)
+{
+    char buffer[4];
+    // imprime valor decimal com trÃªs dÃ­gitos
+    buffer[0] = (val / 100) + '0';
+    buffer[1] = ((val / 10) % 10) + '0';
+    buffer[2] = (val % 10) + '0';
+    buffer[3] = 0;
+    lcd_print(buffer);
+}
+
+// Setup dos botÃµes com pull-up
+void buttons_init(void)
+{
+    DDRC &= ~((1 << BTN1_PIN) | (1 << BTN2_PIN) | (1 << BTN3_PIN)); // entrada
+    PORTC |= (1 << BTN1_PIN) | (1 << BTN2_PIN) | (1 << BTN3_PIN);    // pull-ups
+}
+
+// Leitura simples dos botÃµes, retorna true se pressionado (ativo-baixo)
+bool button_pressed(uint8_t pin)
+{
+    if (!(PINC & (1 << pin)))
+    {
+        _delay_ms(20); // debounce bÃ¡sico
+        if (!(PINC & (1 << pin)))
+            return true;
+    }
+    return false;
+}
+
+void lcd_atualiza_display(void)
+{
+    lcd_clear();
+
+    // top row - tÃ­tulos
+    lcd_goto(0, 0);
+    lcd_print("RED  GREEN BLUE");
+
+    // segunda linha valores e indicaÃ§Ã£o da cor selecionada
+    lcd_goto(1, 0);
+
+    // imprime RED
+    if (seletor == 0)
+        lcd_send_byte('_', 1);  // underline indica seleÃ§Ã£o
+    else
+        lcd_send_byte(' ', 1);
+    lcd_print_num(red_val);
+    lcd_print(" ");
+
+    // imprime GREEN
+    if (seletor == 1)
+        lcd_send_byte('_', 1);
+    else
+        lcd_send_byte(' ', 1);
+    lcd_print_num(green_val);
+    lcd_print(" ");
+
+    // imprime BLUE
+    if (seletor == 2)
+        lcd_send_byte('_', 1);
+    else
+        lcd_send_byte(' ', 1);
+    lcd_print_num(blue_val);
+}
+
 int main(void)
 {
-    // desabilita interrupções
-    cli();
-    // pull-ups em PD2,PD3,PD4
-    DDRD &= ~((1<<BTN_M)|(1<<BTN_UP)|(1<<BTN_DOWN));
-    PORTD |=  ((1<<BTN_M)|(1<<BTN_UP)|(1<<BTN_DOWN));
-
-    pwm_init();
+    buttons_init();
     lcd_init();
-    systick_init();
-    pcint_init();
+    lcd_atualiza_display();
 
-    // libera interrupções
-    sei();
+    for (;;)
+    {
+        // Troca cor selecionada com o botÃ£o S1
+        if (button_pressed(BTN1_PIN))
+        {
+            seletor++;
+            if (seletor > 2)
+                seletor = 0;
+            lcd_atualiza_display();
+            while (button_pressed(BTN1_PIN))
+                ; // espera liberar botÃ£o
+        }
 
-    // primeira atualização de tela
-    lcd_refresh();
-    lcd_update = false;
+        // Incrementa valor com S2
+        if (button_pressed(BTN2_PIN))
+        {
+            switch (seletor)
+            {
+            case 0:
+                if (red_val < 255)
+                    red_val++;
+                break;
+            case 1:
+                if (green_val < 255)
+                    green_val++;
+                break;
+            case 2:
+                if (blue_val < 255)
+                    blue_val++;
+                break;
+            }
+            lcd_atualiza_display();
+            while (button_pressed(BTN2_PIN))
+                ; // espera liberar botÃ£o
+        }
 
-    // loop principal – só faz a atualização de tela
-    for(;;) {
-        if (lcd_update) {
-            lcd_refresh();
-            lcd_update = false;
+        // Decrementa valor com S3
+        if (button_pressed(BTN3_PIN))
+        {
+            switch (seletor)
+            {
+            case 0:
+                if (red_val > 0)
+                    red_val--;
+                break;
+            case 1:
+                if (green_val > 0)
+                    green_val--;
+                break;
+            case 2:
+                if (blue_val > 0)
+                    blue_val--;
+                break;
+            }
+            lcd_atualiza_display();
+            while (button_pressed(BTN3_PIN))
+                ; // espera liberar botÃ£o
         }
     }
-    return 0;
 }
