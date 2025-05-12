@@ -1,11 +1,12 @@
 .include "m328pdef.inc"
 
+.def centena = r0
+.def dezena = r1
+.def unidade = r2
+.def divisor_100 = r3
+.def divisor_10 = r4
 .def regCounter = r16
 .def regAuxiliar = r20
-.def centena = r22
-.def dezena = r23
-.def unidade = r24
-.def divisor = r25
 
 
 ; ----------------------------------------------------
@@ -49,6 +50,14 @@ setup:
 
     sei                     ; Habilita interrupções globais
 
+    ldi r26, 100
+    mov divisor_100, r26   ; Inicializa o divisor de 100
+
+    ldi r26, 10
+    mov divisor_10, r26    ; Inicializa o divisor de 10
+
+    clr r26
+
     clr r30                 ; Inicializa flag de interrupção (bit 0)
 
 state_verifica_eeprom:
@@ -62,7 +71,7 @@ state_verifica_eeprom:
 ; Loop Principal
 ; ----------------------------------------------------
 main_loop:
-    sbrs r30, 0              ; Checa se PC1 (medir distância) foi pressionado
+    sbrc r30, 0              ; Checa se PC1 (medir distância) foi pressionado
     rjmp checa_botao_pc2
     rcall measure_distance    ; Mede distância (resultado em r17)
     mov r31, r17             ; Atualiza regAuxiliar
@@ -186,11 +195,12 @@ divide_16by8:
     rcall divide_loop
 
 verifica_xl:
-    cpi XL, 58
+    cpi XL, 132
     brlo divide_done
 
 divide_loop:
-    sbiw XH:XL, 58
+    sbiw XH:XL, 61
+    sbiw XH:XL, 61
     inc r17
     rcall divide_16by8  
 
@@ -296,21 +306,19 @@ break_digits:
     clr unidade  ; Unidades
 
     ; Calcula o dígito das centenas
-    ldi divisor, 100
 centena_loop:
-    cp regAuxiliar, divisor
+    cp regAuxiliar, divisor_100
     brlo calcula_dezena
-    sub regAuxiliar, divisor
+    sub regAuxiliar, divisor_100
     inc centena
     rjmp centena_loop
 
 calcula_dezena:
     ; Calcula o dígito das dezenas
-    ldi divisor, 10
 dezena_loop:
-    cp regAuxiliar, divisor
+    cp regAuxiliar, divisor_10
     brlo calcula_unidade
-    sub regAuxiliar, divisor
+    sub regAuxiliar, divisor_10
     inc dezena
     rjmp dezena_loop
 
