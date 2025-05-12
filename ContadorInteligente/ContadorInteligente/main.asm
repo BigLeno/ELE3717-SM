@@ -6,13 +6,14 @@
 .def unidade = r2
 .def regAdc = r3
 .def regPot = r4
+.def divisor_100 = r5
+.def divisor_10 = r6
 .def regCounter = r16
 .def regMinMaxStep = r17
 .def step = r18
 .def min = r19
 .def max = r20
 .def regAuxiliar = r21
-.def divisor = r22
 .def contador_do_contador = r23
 .def contador = r24
 .def inc_ou_dec = r25
@@ -70,14 +71,25 @@ setup:
 
     ldi r26, 0xC7
     mov regAdc, r26         ; Inicializa o registrador ADC
+
+    ldi r26, 100
+    mov divisor_100, r26   ; Inicializa o divisor de 100
+
+    ldi r26, 10
+    mov divisor_10, r26    ; Inicializa o divisor de 10
+
     clr r26
+
+
 
     clr r30                 ; Inicializa flag de interrupção (bit 0)
     ldi r31, 0x00
     ldi regMinMaxStep, 0x00 ; Inicializa o registrador de controle
     ldi min, 0x00
-    ldi max, 0xFF
-    ldi step, 1
+    ; ldi max, 0xFF
+    ldi max, 0x0A
+    ; ldi step, 0x01
+    ldi step, 0x03
     ldi inc_ou_dec, 0x00 ; Inicializa o estado do contador (crescente)
     ldi contador_do_contador, 0  ; r23 ← 0
     ldi contador,              0  ; r24 ← 0
@@ -110,16 +122,23 @@ cont_count:
     breq stop_contador
 
 cont_crescente:
-    cp contador, max ; Verifica se o contador chegou ao máximo
-    breq stop_contador
     add contador, step ; Incrementa o contador
+    cp contador, max ; Verifica se o contador chegou ao máximo
+    brge overflow
     ret
 
+overflow:
+    mov contador, max ; Reseta o contador para o máximo
+    rjmp stop_contador
+
 cont_decrescente:
+    sub contador, step ; Decrementa o contador
     cp contador, min ; Verifica se o contador chegou ao mínimo
-    breq stop_contador
-    sbc contador, step ; Decrementa o contador
+    brlt if_lower_than
     ret
+
+if_lower_than:
+    mov contador, min
 
 stop_contador:
     nop
@@ -140,6 +159,7 @@ set_min_max_step:
 
 incrementador:
     ldi inc_ou_dec, 0x00
+    
     ret
 
 decrementador:
@@ -339,21 +359,19 @@ break_digits:
     clr unidade  ; Unidades
 
     ; Calcula o dígito das centenas
-    ldi divisor, 100
 centena_loop:
-    cp regAuxiliar, divisor
+    cp regAuxiliar, divisor_100
     brlo calcula_dezena
-    sub regAuxiliar, divisor
+    sub regAuxiliar, divisor_100
     inc centena
     rjmp centena_loop
 
 calcula_dezena:
     ; Calcula o dígito das dezenas
-    ldi divisor, 10
 dezena_loop:
-    cp regAuxiliar, divisor
+    cp regAuxiliar, divisor_10
     brlo calcula_unidade
-    sub regAuxiliar, divisor
+    sub regAuxiliar, divisor_10
     inc dezena
     rjmp dezena_loop
 
