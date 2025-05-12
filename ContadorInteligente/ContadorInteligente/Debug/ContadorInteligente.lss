@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Mon May 12 13:47:08 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm Mon May 12 13:59:54 2025
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
 C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\ContadorInteligente\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328pdef.inc'
@@ -1133,6 +1133,7 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
                                  
                                  
                                  cont_count:
+                                 
 000039 3090                          cpi inc_ou_dec, 0x00         ; Verifica se o estado é crescente (0) 
 00003a f019                          breq cont_crescente
 00003b 3091                          cpi inc_ou_dec, 0x01         ; Verifica se o estado é decrescente (1)
@@ -1208,7 +1209,8 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
 000062 982a                          cbi PORTB, 2 ; Desliga o LED verde
 000063 982b                          cbi PORTB, 3 ; Desliga o LED vermelho
                                  
-000064 e0f0                          ldi r31, 0x00
+000064 2f83                          mov contador, min
+                                 
 000065 cfee                          rjmp atualiza_display
                                  
                                  set_add_min:
@@ -1243,7 +1245,7 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\ContadorInteligente\Contado
 00007d 9446                          lsr regPot ; Divide o valor lido por 2
 00007e 9446                          lsr regPot ; Divide o valor lido por 2
 00007f 2df4                          mov r31, regPot ; Armazena o valor lido no registrador auxiliar
-000080 2db4                          mov r27, regPot ; Armazena o valor lido no registrador auxiliar
+000080 2d24                          mov step, regPot ; Armazena o valor lido no registrador auxiliar
                                  
 000081 cfd2                          rjmp atualiza_display
                                  
@@ -1470,9 +1472,9 @@ counted separately from r26..r31 here.
 "ATmega328P" register use summary:
 x  :   0 y  :   0 z  :   0 r0 :   3 r1 :   3 r2 :   3 r3 :   2 r4 :  13 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:   3 r17:   8 r18:   3 r19:   3 r20:   3 
-r21:  33 r22:   6 r23:   1 r24:   6 r25:   5 r26:  25 r27:   4 r28:   0 
-r29:   0 r30:   8 r31:   8 
+r13:   0 r14:   0 r15:   0 r16:   3 r17:   8 r18:   4 r19:   4 r20:   3 
+r21:  33 r22:   6 r23:   1 r24:   7 r25:   5 r26:  25 r27:   3 r28:   0 
+r29:   0 r30:   8 r31:   7 
 Registers used: 19 out of 35 (54.3%)
 
 "ATmega328P" instruction use summary:
@@ -1486,8 +1488,8 @@ clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   6 cls   :   0
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   4 cpc   :   0 
 cpi   :  20 cpse  :   0 dec   :   2 eor   :   0 fmul  :   0 fmuls :   0 
 fmulsu:   0 icall :   0 ijmp  :   0 in    :   1 inc   :   4 jmp   :   0 
-ld    :   0 ldd   :   0 ldi   :  33 lds   :   2 lpm   :   0 lsl   :   0 
-lsr   :   4 mov   :  14 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
+ld    :   0 ldd   :   0 ldi   :  32 lds   :   2 lpm   :   0 lsl   :   0 
+lsr   :   4 mov   :  15 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
 neg   :   0 nop   :   1 or    :   0 ori   :   0 out   :   5 pop   :   4 
 push  :   2 rcall :  13 ret   :  11 reti  :   2 rjmp  :  24 rol   :   0 
 ror   :   0 sbc   :   1 sbci  :   0 sbi   :  16 sbic  :   0 sbis  :   3 

@@ -102,6 +102,7 @@ main_loop:
 
 
 cont_count:
+
     cpi inc_ou_dec, 0x00         ; Verifica se o estado é crescente (0) 
     breq cont_crescente
     cpi inc_ou_dec, 0x01         ; Verifica se o estado é decrescente (1)
@@ -177,7 +178,8 @@ reset_regMinMaxStep:
     cbi PORTB, 2 ; Desliga o LED verde
     cbi PORTB, 3 ; Desliga o LED vermelho
 
-    ldi r31, 0x00
+    mov contador, min
+
     rjmp atualiza_display
 
 set_add_min:
@@ -212,7 +214,7 @@ set_add_step:
     lsr regPot ; Divide o valor lido por 2
     lsr regPot ; Divide o valor lido por 2
     mov r31, regPot ; Armazena o valor lido no registrador auxiliar
-    mov r27, regPot ; Armazena o valor lido no registrador auxiliar
+    mov step, regPot ; Armazena o valor lido no registrador auxiliar
 
     rjmp atualiza_display
 
