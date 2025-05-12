@@ -10,12 +10,15 @@
 .def regMinMaxStep = r17
 .def step = r18
 .def min = r19
-.def max = r21
-.def regAuxiliar = r20
-.def divisor = r25
+.def max = r20
+.def regAuxiliar = r21
+.def divisor = r22
+.def contador_do_contador = r23
+.def contador = r24
+.def inc_ou_dec = r25
 
 ; registradores disponíveis
-; r22, r23, r24, r27
+; r25, r23, r24, r27
 
 
 .org 0x000
@@ -72,6 +75,13 @@ setup:
     clr r30                 ; Inicializa flag de interrupção (bit 0)
     ldi r31, 0x00
     ldi regMinMaxStep, 0x00 ; Inicializa o registrador de controle
+    ldi min, 0x00
+    ldi max, 0xFF
+    ldi step, 1
+    ldi inc_ou_dec, 0x00 ; Inicializa o estado do contador (crescente)
+    ldi contador_do_contador, 0  ; r23 ← 0
+    ldi contador,              0  ; r24 ← 0
+
     
 
 
@@ -83,14 +93,36 @@ main_loop:
     sbrc r30, 2            ; Verifica se a flag de interrupção está setada
     rcall decrementador ; Se sim, chama a rotina de mudança de direção
 
-    ldi r31, 100
+    rcall cont_count ; Chama a rotina de inicialização do contador
 
+    mov r31, contador ; Move o valor do contador para o registrador auxiliar
 	
     rjmp atualiza_display
 
-init_contador:
 
 
+cont_count:
+    cpi inc_ou_dec, 0x00         ; Verifica se o estado é crescente (0) 
+    breq cont_crescente
+    cpi inc_ou_dec, 0x01         ; Verifica se o estado é decrescente (1)
+    breq cont_decrescente
+    breq stop_contador
+
+cont_crescente:
+    cp contador, max ; Verifica se o contador chegou ao máximo
+    breq stop_contador
+    add contador, step ; Incrementa o contador
+    ret
+
+cont_decrescente:
+    cp contador, min ; Verifica se o contador chegou ao mínimo
+    breq stop_contador
+    sbc contador, step ; Decrementa o contador
+    ret
+
+stop_contador:
+    nop
+    rjmp atualiza_display ; Retorna para o loop principal
 
 
 set_min_max_step:
@@ -106,13 +138,11 @@ set_min_max_step:
     
 
 incrementador:
-    ldi r28, 0x00
-    ldi r31, 0x03
+    ldi inc_ou_dec, 0x00
     ret
 
 decrementador:
-    ldi r28, 0x01
-    ldi r31, 0x06
+    ldi inc_ou_dec, 0x01
     ret
 
 
