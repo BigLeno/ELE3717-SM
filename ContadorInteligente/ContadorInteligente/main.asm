@@ -1,5 +1,4 @@
 .include "m328pdef.inc"
-
 ; Nomeação de registradores
 .def regCounter = r16
 .def regMinMaxStep = r17
@@ -12,16 +11,13 @@
 .def unidade = r24
 .def divisor = r25
 
-
 .org 0x000
     rjmp setup             ; Ponto de entrada
-
 ; ----------------------------------------------------
 ; Vetor de Interrupção PCI1 (Pin Change Interrupt 1 - Port C)
 ; ----------------------------------------------------
 .org PCI1addr            ; Endereço do vetor de interrupção PCI1
     rjmp PCINT1_ISR      ; Salta para a rotina de serviço
-
 ; ----------------------------------------------------
 ; Setup: Configuração inicial dos pinos e memória
 ; ----------------------------------------------------
@@ -30,57 +26,46 @@ setup:
     sbi DDRB, 0 ; TJ1 - Centena
     sbi DDRD, 3 ; TJ2 - Dezena
     sbi DDRD, 2 ; TJ3 - Unidade
-
     ; Configura pinos dos segmentos do display
     sbi DDRD, 4 ; HX0
     sbi DDRD, 5 ; HX1
     sbi DDRD, 6 ; HX2
     sbi DDRD, 7 ; HX3
-
     ; Configura pinos do led rgb
     sbi DDRB, 1 ; LED Azul
     sbi DDRB, 2 ; LED Verde
     sbi DDRB, 3 ; LED Vermelho
-
     ; Configura pino do potenciometro
     cbi DDRC, 0 ; Potenciômetro
-
     ldi     r26, 0x60
-	sts     ADMUX, r26   ; defina AVcc como referencia e ajuste a esquerda             
-	ldi     r26, 0x00
-	sts     ADCSRB, r26  ; defina o modo de trigger free running		
-	ldi     r26, 0x87    
-	sts     ADCSRA, r26  ; habilite o adc e utilize uma pre-escala de 128
-
+    sts     ADMUX, r26   ; defina AVcc como referencia e ajuste a esquerda             
+    ldi     r26, 0x00
+    sts     ADCSRB, r26  ; defina o modo de trigger free running		
+    ldi     r26, 0x87    
+    sts     ADCSRA, r26  ; habilite o adc e utilize uma pre-escala de 128
     ; Habilita interrupção por mudança no pino PC1 (PCINT9)
     ldi r26, (1 << PCIE1)   ; Habilita PCI1 (Port C) no PCICR
     sts PCICR, r26
     ldi r26, (1 << PCINT9) | (1 << PCINT10) | (1 << PCINT11)  ; Habilita PCINT9, PCINT10, PCINT11 (PC1, PC2, PC3)
     sts PCMSK1, r26
-
     sei                     ; Habilita interrupções globais
-
     clr r30                 ; Inicializa flag de interrupção (bit 0)
+    clr r29            ; Inicializa o r29 em 0
     ldi r31, 0x00
     ldi regMinMaxStep, 0x00 ; Inicializa o registrador de controle
     ldi r28, 0x00
 
-
 main_loop:
     sbrc r30, 0            ; Verifica se a flag de interrupção está setada
-    rcall incrementador ; Se sim, chama a rotina de mudança de direção
+    rcall incrementador     ; Se sim, chama a rotina para incrementar o r29
     sbrc r30, 1            ; Se flag de interrupção não estiver setada, continua
     rjmp set_min_max_step
     sbrc r30, 2            ; Verifica se a flag de interrupção está setada
-    rcall decrementador ; Se sim, chama a rotina de mudança de direção
-
-	
+    rcall decrementador     ; Se sim, chama a rotina para decrementar o r29
+    
     rjmp atualiza_display
 
-
-
 set_min_max_step:
-
     cpi regMinMaxStep, 0x01 ; Modo: Ajustar Min
     breq set_add_min
     cpi regMinMaxStep, 0x02 ; Modo: Ajustar Max
@@ -90,34 +75,37 @@ set_min_max_step:
     cpi regMinMaxStep, 0x04 ; Modo: Resetar
     breq reset_regMinMaxStep
     
-
+; Modifiquei estas funções para implementar o r29
 incrementador:
-    ldi r28, 0x00
-    ldi r31, 0x03
+    inc r29            ; Incrementa o r29
+    cpi r29, 255       ; Verifica se chegou a 255
+    brne continua_inc       ; Se não, continua
+    ldi r29, 255       ; Se sim, limita a 255
+continua_inc:
+    mov r31, r29       ; Copia o valor do r29 para r31 para exibição
+    clr r30                 ; Limpa a flag de interrupção
     ret
-
-decrementador:
-    ldi r28, 0x01
-    ldi r31, 0x06
-    ret
-
-
     
+decrementador:
+    cpi r29, 0         ; Verifica se já está em 0
+    breq continua_dec       ; Se sim, continua sem decrementar
+    dec r29            ; Se não, decrementa o r29
+continua_dec:
+    mov r31, r29       ; Copia o valor do r29 para r31 para exibição
+    clr r30                 ; Limpa a flag de interrupção
+    ret
+
 atualiza_display:
     clr r30                  ; Limpa todos os bits de flag
     mov regAuxiliar, r31
     rcall exibe_display
-
     cpi regMinMaxStep, 0x00 ; Verifica se o modo é de ajuste
-    brne set_min_max_step ; Se não for, continua no loop principal
-
+    brne set_min_max_step   ; Se não for, continua no loop principal
     rjmp main_loop
-
 exibe_default:
     mov regAuxiliar, r31
     rcall exibe_display
     rjmp main_loop
-
 exibe_display:
     rcall break_digits       ; Divide em centenas, dezenas, unidades
     rcall mostrar_digitos    ; Exibe no display
