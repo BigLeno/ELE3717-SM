@@ -1,16 +1,21 @@
 .include "m328pdef.inc"
 
 ; Nomeação de registradores
+.def centena = r0
+.def dezena = r1
+.def unidade = r2
+.def regAdc = r3
+.def regPot = r4
 .def regCounter = r16
 .def regMinMaxStep = r17
-.def regPot = r18
+.def step = r18
 .def min = r19
-.def regAuxiliar = r20
 .def max = r21
-.def centena = r22
-.def dezena = r23
-.def unidade = r24
+.def regAuxiliar = r20
 .def divisor = r25
+
+; registradores disponíveis
+; r22, r23, r24, r27
 
 
 .org 0x000
@@ -60,10 +65,14 @@ setup:
 
     sei                     ; Habilita interrupções globais
 
+    ldi r26, 0xC7
+    mov regAdc, r26         ; Inicializa o registrador ADC
+    clr r26
+
     clr r30                 ; Inicializa flag de interrupção (bit 0)
     ldi r31, 0x00
     ldi regMinMaxStep, 0x00 ; Inicializa o registrador de controle
-    ldi r28, 0x00
+    
 
 
 main_loop:
@@ -74,8 +83,13 @@ main_loop:
     sbrc r30, 2            ; Verifica se a flag de interrupção está setada
     rcall decrementador ; Se sim, chama a rotina de mudança de direção
 
+    ldi r31, 100
+
 	
     rjmp atualiza_display
+
+init_contador:
+
 
 
 
@@ -369,8 +383,7 @@ delay_loop:
     ret
 
 Radc:   
-	ldi     regpot, 0xC7    
-	sts     ADCSRA,regpot   ; inicie a conversao 
+	sts     ADCSRA,regAdc   ; inicie a conversao 
 
 loop_adc:
 	lds     regpot, ADCSRA  ; carregue no registrador regpot o valor de ADCSRA
