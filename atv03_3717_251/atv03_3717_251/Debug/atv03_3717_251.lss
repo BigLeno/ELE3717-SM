@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm Mon May 12 16:08:00 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm Mon May 12 16:29:46 2025
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
 C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328pdef.inc'
@@ -1194,8 +1194,8 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_2
                                  ; ----------------------------------------------------
                                  measure_distance:
 000051 dff9                          rcall trigger_pulse
-000052 e9ac                          ldi r26, HIGH(40000)  ; Timeout ~7m
-000053 e4b0                          ldi r27, LOW(40000)
+000052 efaf                          ldi r26, HIGH(65535)  ; Timeout máximo ~11m (valor máximo 16 bits)
+000053 efbf                          ldi r27, LOW(65535)
                                      
                                      ; Espera ativa com verificação de timeout
                                  echo_wait:
@@ -1212,7 +1212,7 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_2
 00005b 9611                          adiw X, 1
 00005c 9b35                          sbis PINC, 5
 00005d c002                          rjmp pulse_end
-00005e 34b0                          cpi r27, LOW(40000)
+00005e 3fbf                          cpi r27, LOW(65535)
 00005f f3d8                          brlo pulse_measure
                                  
                                  pulse_end:
@@ -1220,6 +1220,13 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_2
 000061 d001                          rcall divide_16by8
 000062 9508                          ret
                                  
+                                 ; ----------------------------------------------------
+                                 ; Sub-rotina: Divide o valor de X por 122 para obter cm
+                                 ; Entradas:
+                                 ;   - X (r26:r27): Valor da contagem de tempo
+                                 ; Saídas:
+                                 ;   - r17: Distância em cm
+                                 ; ----------------------------------------------------
                                  divide_16by8:
 000063 30b0                          cpi XH, 0x00
 000064 f009                          breq verifica_xl

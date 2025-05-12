@@ -163,8 +163,8 @@ trigger_pulse:
 ; ----------------------------------------------------
 measure_distance:
     rcall trigger_pulse
-    ldi r26, HIGH(40000)  ; Timeout ~7m
-    ldi r27, LOW(40000)
+    ldi r26, HIGH(65535)  ; Timeout máximo ~11m (valor máximo 16 bits)
+    ldi r27, LOW(65535)
     
     ; Espera ativa com verificação de timeout
 echo_wait:
@@ -181,7 +181,7 @@ pulse_measure:
     adiw X, 1
     sbis PINC, 5
     rjmp pulse_end
-    cpi r27, LOW(40000)
+    cpi r27, LOW(65535)
     brlo pulse_measure
 
 pulse_end:
@@ -189,6 +189,13 @@ pulse_end:
     rcall divide_16by8
     ret
 
+; ----------------------------------------------------
+; Sub-rotina: Divide o valor de X por 122 para obter cm
+; Entradas:
+;   - X (r26:r27): Valor da contagem de tempo
+; Saídas:
+;   - r17: Distância em cm
+; ----------------------------------------------------
 divide_16by8:
     cpi XH, 0x00
     breq verifica_xl
