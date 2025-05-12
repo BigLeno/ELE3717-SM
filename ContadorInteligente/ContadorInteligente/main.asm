@@ -87,7 +87,7 @@ setup:
     ldi regMinMaxStep, 0x00 ; Inicializa o registrador de controle
     ldi min, 0x00
     ; ldi max, 0xFF
-    ldi max, 0x0A
+    ldi max, 0x64
     ; ldi step, 0x01
     ldi step, 0x03
     ldi inc_ou_dec, 0x00 ; Inicializa o estado do contador (crescente)

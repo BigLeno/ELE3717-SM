@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm Mon May 12 16:29:46 2025
+AVRASM ver. 2.2.8  C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm Mon May 12 17:21:59 2025
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
 C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_251\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328pdef.inc'
@@ -1102,7 +1102,7 @@ C:\Users\rgabr\OneDrive\Documentos\Github\ELE3717-SM\atv03_3717_251\atv03_3717_2
                                  ; Loop Principal
                                  ; ----------------------------------------------------
                                  main_loop:
-000020 fde0                          sbrc r30, 0              ; Checa se PC1 (medir distância) foi pressionado
+000020 ffe0                          sbrs r30, 0              ; Checa se PC1 (medir distância) foi pressionado
 000021 c003                          rjmp checa_botao_pc2
 000022 d02e                          rcall measure_distance    ; Mede distância (resultado em r17)
 000023 2ff1                          mov r31, r17             ; Atualiza regAuxiliar
@@ -1481,11 +1481,11 @@ lsr   :   0 mov   :  11 movw  :   0 mul   :   0 muls  :   0 mulsu :   0
 neg   :   0 nop   :   2 or    :   0 ori   :   0 out   :   8 pop   :   4 
 push  :   2 rcall :  19 ret   :  13 reti  :   2 rjmp  :  25 rol   :   0 
 ror   :   0 sbc   :   0 sbci  :   0 sbi   :  15 sbic  :   3 sbis  :   4 
-sbiw  :   3 sbr   :   3 sbrc  :   1 sbrs  :   2 sec   :   0 seh   :   0 
+sbiw  :   3 sbr   :   3 sbrc  :   0 sbrs  :   3 sec   :   0 seh   :   0 
 sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
 sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 sts   :   2 
 sub   :   2 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
-Instructions used: 31 out of 113 (27.4%)
+Instructions used: 30 out of 113 (26.5%)
 
 "ATmega328P" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%

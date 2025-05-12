@@ -71,7 +71,7 @@ state_verifica_eeprom:
 ; Loop Principal
 ; ----------------------------------------------------
 main_loop:
-    sbrc r30, 0              ; Checa se PC1 (medir distância) foi pressionado
+    sbrs r30, 0              ; Checa se PC1 (medir distância) foi pressionado
     rjmp checa_botao_pc2
     rcall measure_distance    ; Mede distância (resultado em r17)
     mov r31, r17             ; Atualiza regAuxiliar
