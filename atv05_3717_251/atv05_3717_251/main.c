@@ -50,55 +50,53 @@ void max7219_set_column(int col, uint8_t value) {
 	max7219_send(col + 1, value);
 }
 
+void adc_init() {
+	// Configura o ADC para usar referência AVcc (5V) e seleciona canal inicial 0
+	ADMUX = (1 << REFS0);
+	// Habilita ADC e configura prescaler para 128 (para 16 MHz CPU, ADC ~125 kHz)
+	ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+	// Desliga entradas digitais nos ADC4 e ADC5 (PC4 e PC5) para reduzir interferência
+	DIDR0 = (1 << ADC4D) | (1 << ADC5D);
+}
+
+uint16_t adc_read(uint8_t channel) {
+	// Configurar e iniciar ADC, ajustar para o canal indicado (0 a 7)
+	ADMUX = (ADMUX & 0xF0) | (channel & 0x0F);
+	ADCSRA |= (1<<ADSC);                     // Inicia conversão
+	while(ADCSRA & (1<<ADSC));               // Aguarda conversão terminar
+	return ADCW;
+}
+
+
+
 int main() {
 	spi_init();
 	max7219_init();
+	max7219_clear();
+	adc_init();     // Chame aqui a inicialização do ADC
 
-	while (1) {
-		// 1) Acender colunas do 0 ao 7 (todas as linhas com bit da coluna ligado)
-		// Vai da coluna 0 até 7
-		for (int col = 0; col < 8; col++) {
-			uint8_t val = 1 << col;
-			for (int linha = 1; linha <= 8; linha++) {
-				max7219_send(linha, val);
-			}
-			_delay_ms(200);
-		}
+	int pos_x = 0, pos_y = 0;
+	int last_pos_x = 0, last_pos_y = 0;
 
-		// Volta da coluna 6 até 1 (não repete coluna 7 e 0)
-		for (int col = 6; col > 0; col--) {
-			uint8_t val = 1 << col;
-			for (int linha = 1; linha <= 8; linha++) {
-				max7219_send(linha, val);
-			}
-			_delay_ms(200);
-		}
+	while(1) {
+		uint16_t adc_x = adc_read(4); // PC4 -> ADC4
+		uint16_t adc_y = adc_read(5); // PC5 -> ADC5
 
-		// 2) Linha acesa sobe (linha 1 até 8), coluna fixa na última coluna acesa
-		//int col_fixa = 7;  // por exemplo, usa a última coluna acesa
-		//uint8_t val = 1 << col_fixa;
-		for (int linha = 1; linha <= 8; linha++) {
-			for (int i = 1; i <= 8; i++) {
-				if (i == linha) {
-					max7219_send(i, 0xFF);  // linha inteira acesa
-					} else {
-					max7219_send(i, 0x00);  // outras linhas apagadas
-				}
-			}
-			_delay_ms(200);
-		}
+		pos_x = (adc_x * 8) / 1024;
+		pos_y = (adc_y * 8) / 1024;
 
-		// 3) Linha acesa desce (linha 8 até 1), mesma coluna fixa
-		for (int linha = 8; linha >= 1; linha--) {
-			for (int i = 1; i <= 8; i++) {
-				if (i == linha) {
-					max7219_send(i, 0xFF);  // linha inteira acesa
-					} else {
-					max7219_send(i, 0x00);  // outras linhas apagadas
-				}
-			}
-			_delay_ms(200);
-		}
+		if(pos_x > 7) pos_x = 7;
+		if(pos_y > 7) pos_y = 7;
+
+		// Apaga o ponto anterior
+		max7219_send(last_pos_y + 1, 0x00);
+
+		// Acende o ponto novo
+		max7219_send(pos_y + 1, 1 << pos_x);
+
+		last_pos_x = pos_x;
+		last_pos_y = pos_y;
+
+		_delay_ms(50);
 	}
-	return 0;
 }
