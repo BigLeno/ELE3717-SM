@@ -3,14 +3,10 @@
 #include <util/delay.h>
 #include <stdint.h>
 
+#include "lcd.h"
 #include "spi.h"
 #include "max7219.h"
 
-// --- Definições LCD ---
-#define LCD_PORT PORTD
-#define LCD_DDR DDRD
-#define RS PD2
-#define E  PD3
 
 // --- Funções ADC ---
 
@@ -25,66 +21,6 @@ uint16_t adc_read(uint8_t channel) {
     ADCSRA |= (1 << ADSC);
     while (ADCSRA & (1 << ADSC));
     return ADCW;
-}
-
-// --- Funções LCD ---
-
-void lcd_pulse_enable() {
-    LCD_PORT |= (1 << E);
-    _delay_us(1);
-    LCD_PORT &= ~(1 << E);
-    _delay_us(100);
-}
-
-void lcd_send_nibble(uint8_t nibble) {
-    LCD_PORT &= 0x0F;
-    LCD_PORT |= (nibble << 4);
-    lcd_pulse_enable();
-}
-
-void lcd_send_byte(uint8_t data, uint8_t is_data) {
-    if (is_data)
-        LCD_PORT |= (1 << RS);
-    else
-        LCD_PORT &= ~(1 << RS);
-    lcd_send_nibble(data >> 4);
-    lcd_send_nibble(data & 0x0F);
-    _delay_us(50);
-}
-
-void lcd_init() {
-    LCD_DDR |= (1 << RS) | (1 << E) | (1 << PD4) | (1 << PD5) | (1 << PD6) | (1 << PD7);
-    _delay_ms(40);
-    LCD_PORT &= ~((1 << RS) | (1 << E) | (1 << PD4) | (1 << PD5) | (1 << PD6) | (1 << PD7));
-
-    lcd_send_nibble(0x03);
-    _delay_ms(5);
-    lcd_send_nibble(0x03);
-    _delay_us(150);
-    lcd_send_nibble(0x03);
-    lcd_send_nibble(0x02);
-
-    lcd_send_byte(0x28, 0);
-    lcd_send_byte(0x0C, 0);
-    lcd_send_byte(0x06, 0);
-    lcd_send_byte(0x01, 0);
-    _delay_ms(2);
-}
-
-void lcd_clear() {
-    lcd_send_byte(0x01, 0);
-    _delay_ms(2);
-}
-
-void lcd_goto(uint8_t line, uint8_t pos) {
-    uint8_t addr = pos + (line ? 0x40 : 0x00);
-    lcd_send_byte(0x80 | addr, 0);
-}
-
-void lcd_print(const char *str) {
-    while (*str) {
-        lcd_send_byte(*str++, 1);
-    }
 }
 
 // --- Função para mostrar bits como string com espaços ---
@@ -114,10 +50,13 @@ int main() {
         uint16_t adc_x = adc_read(4);
         uint16_t adc_y = adc_read(5);
 
+        // Ajustando a leitura de 0 a 7
         pos_x = (adc_x * 8) / 1024;
         pos_y = (adc_y * 8) / 1024;
         if (pos_x > 7) pos_x = 7;
         if (pos_y > 7) pos_y = 7;
+        if (pos_x == 0) pos_x = 1;
+        if (pos_y == 0) pos_y = 1;
 
         if (pos_x != last_pos_x || pos_y != last_pos_y) {
             if (last_pos_y >= 0 && last_pos_y <= 7) {
