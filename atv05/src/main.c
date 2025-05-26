@@ -3,40 +3,14 @@
 #include <util/delay.h>
 #include <stdint.h>
 
-#include "spi.h"   // Inclui arquivo SPI.h
+#include "spi.h"
+#include "max7219.h"
 
 // --- Definições LCD ---
 #define LCD_PORT PORTD
 #define LCD_DDR DDRD
 #define RS PD2
 #define E  PD3
-
-// --- Funções SPI e MAX7219 ---
-#define DATA_PORT_PORT PORTB
-#define DATA_PORT_DDR DDRB
-#define CS  PB2     // Chip select
-
-
-void max7219_send(uint8_t addr, uint8_t data) {
-    DATA_PORT_PORT &= ~(1 << CS);
-    spi_transmit(addr);
-    spi_transmit(data);
-    DATA_PORT_PORT |= (1 << CS);
-}
-
-void max7219_init() {
-    max7219_send(0x0F, 0x00);
-    max7219_send(0x09, 0x00);
-    max7219_send(0x0A, 0x03);
-    max7219_send(0x0B, 0x07);
-    max7219_send(0x0C, 0x01);
-}
-
-void max7219_clear() {
-    for (uint8_t i = 1; i <= 8; i++) {
-        max7219_send(i, 0x00);
-    }
-}
 
 // --- Funções ADC ---
 
