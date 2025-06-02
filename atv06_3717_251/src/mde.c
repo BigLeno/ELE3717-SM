@@ -33,7 +33,7 @@ void mde_load_coefficients(void) {
     eeprom_load_coefficients(coefficients, NUM_COEFFICIENTS);
     
     // Verifica se há valores válidos na EEPROM (primeira inicialização)
-    // Se todos os coeficientes forem 0xFF (EEPROM virgem), inicializa com valores padrão
+    // Se todos os coeficientes forem 0xFF (EEPROM virgem), inicializa com valores de filtro passa-baixa
     uint8_t all_empty = 1;
     for (uint8_t i = 0; i < NUM_COEFFICIENTS; i++) {
         if (coefficients[i] != 0xFF) {
@@ -43,10 +43,25 @@ void mde_load_coefficients(void) {
     }
     
     if (all_empty) {
-        // Inicializa com valores padrão e salva na EEPROM
-        for (uint8_t i = 0; i < NUM_COEFFICIENTS; i++) {
-            coefficients[i] = 128; // Valor médio
-        }
+        // Inicializa com coeficientes de filtro passa-baixa
+        // Coeficientes decrescentes para criar resposta passa-baixa
+        coefficients[0] = 255;   // Coeficiente mais alto
+        coefficients[1] = 240;
+        coefficients[2] = 220;
+        coefficients[3] = 195;
+        coefficients[4] = 165;
+        coefficients[5] = 135;
+        coefficients[6] = 105;
+        coefficients[7] = 80;
+        coefficients[8] = 60;
+        coefficients[9] = 45;
+        coefficients[10] = 35;
+        coefficients[11] = 25;
+        coefficients[12] = 20;
+        coefficients[13] = 15;
+        coefficients[14] = 10;
+        coefficients[15] = 5;    // Coeficiente mais baixo
+        
         mde_save_coefficients();
     }
 }

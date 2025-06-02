@@ -7,8 +7,26 @@ void fir_init(void) {
     // Inicializa a linha de atraso com zeros
     for (uint8_t i = 0; i < FIR_NUM_TAPS; i++) {
         filter.delay_line[i] = 0;
-        filter.coefficients[i] = 128; // Valores padrão (meio da escala)
     }
+    
+    // Inicializa coeficientes com valores de filtro passa-baixa
+    filter.coefficients[0] = 255;
+    filter.coefficients[1] = 240;
+    filter.coefficients[2] = 220;
+    filter.coefficients[3] = 195;
+    filter.coefficients[4] = 165;
+    filter.coefficients[5] = 135;
+    filter.coefficients[6] = 105;
+    filter.coefficients[7] = 80;
+    filter.coefficients[8] = 60;
+    filter.coefficients[9] = 45;
+    filter.coefficients[10] = 35;
+    filter.coefficients[11] = 25;
+    filter.coefficients[12] = 20;
+    filter.coefficients[13] = 15;
+    filter.coefficients[14] = 10;
+    filter.coefficients[15] = 5;
+    
     filter.index = 0;
     
     // Configura pinos de saída para DAC R2R
@@ -55,9 +73,8 @@ uint8_t fir_process(uint16_t input) {
     }
     
     // Normaliza saída para 8 bits
-    // Divide por (16 * 255) para normalizar (16 coeficientes * valor máximo do coeficiente)
-    // Depois escala para utilizar a entrada de 10 bits
-    output = output >> 12; // Divisão aproximada por 4096 (16*256)
+    // Ajusta para compensar a soma dos coeficientes passa-baixa
+    output = output >> 14; // Divisão aproximada otimizada para filtro passa-baixa
     
     if (output > 255) {
         output = 255;
