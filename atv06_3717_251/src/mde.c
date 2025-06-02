@@ -53,8 +53,6 @@ void mde_load_coefficients(void) {
 
 void mde_run(void) {
     uint8_t btn_s3_pressed = btn_read(BTN_S3);
-    uint8_t btn_s2_pressed = btn_read(BTN_S2);
-    uint8_t btn_s1_pressed = btn_read(BTN_S1);
     
     // Detecta borda de subida do botão S3 (Menu)
     if (btn_s3_pressed && !last_btn_s3_state) {
