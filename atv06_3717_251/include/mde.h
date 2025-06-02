@@ -6,7 +6,8 @@
 // Estados da máquina de estados
 typedef enum {
     STATE_INITIAL,
-    STATE_BUTTONS
+    STATE_BUTTONS,
+    STATE_COEFFICIENTS
 } state_t;
 
 void mde_init(void);
