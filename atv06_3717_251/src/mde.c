@@ -2,6 +2,7 @@
 #include "lcd.h"
 #include "btn.h"
 #include "eeprom.h"
+#include "fir.h"
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -20,9 +21,8 @@ void mde_init(void) {
 }
 
 void mde_update_filter(void) {
-    // Função para aplicar os coeficientes ao filtro FIR
-    // Implementação específica do filtro será adicionada aqui
-    // Por enquanto, apenas um placeholder
+    // Atualiza os coeficientes do filtro FIR
+    fir_set_coefficients(coefficients);
 }
 
 void mde_save_coefficients(void) {
