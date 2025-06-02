@@ -6,18 +6,33 @@
 
 static state_t current_state = STATE_INITIAL;
 static uint8_t coef_index = 0;
-static uint8_t last_btn_state = 0;
+static uint8_t last_btn_s3_state = 0;
+static uint8_t last_btn_s2_state = 0;
+static uint8_t last_btn_s1_state = 0;
+static uint8_t coefficients[NUM_COEFFICIENTS] = {0}; // Array de coeficientes inicializados com 0
 
 void mde_init(void) {
     current_state = STATE_INITIAL;
     coef_index = 0;
+    // Inicializa coeficientes com valores padrão
+    for (uint8_t i = 0; i < NUM_COEFFICIENTS; i++) {
+        coefficients[i] = 128; // Valor médio
+    }
+}
+
+void mde_update_filter(void) {
+    // Função para aplicar os coeficientes ao filtro FIR
+    // Implementação específica do filtro será adicionada aqui
+    // Por enquanto, apenas um placeholder
 }
 
 void mde_run(void) {
     uint8_t btn_s3_pressed = btn_read(BTN_S3);
+    uint8_t btn_s2_pressed = btn_read(BTN_S2);
+    uint8_t btn_s1_pressed = btn_read(BTN_S1);
     
-    // Detecta borda de subida do botão S3
-    if (btn_s3_pressed && !last_btn_state) {
+    // Detecta borda de subida do botão S3 (Menu)
+    if (btn_s3_pressed && !last_btn_s3_state) {
         switch(current_state) {
             case STATE_INITIAL:
                 current_state = STATE_COEFFICIENTS;
@@ -37,7 +52,7 @@ void mde_run(void) {
         }
         _delay_ms(300); // Debounce
     }
-    last_btn_state = btn_s3_pressed;
+    last_btn_s3_state = btn_s3_pressed;
     
     switch(current_state) {
         case STATE_INITIAL:
@@ -52,14 +67,14 @@ void mde_run(void) {
             // Aguarda qualquer botão S1 ou S2 para ir para STATE_BUTTONS
             while(current_state == STATE_INITIAL && !btn_read(BTN_S1) && !btn_read(BTN_S2)) {
                 // Verifica S3 novamente dentro do loop
-                if (btn_read(BTN_S3) && !last_btn_state) {
+                if (btn_read(BTN_S3) && !last_btn_s3_state) {
                     current_state = STATE_COEFFICIENTS;
                     coef_index = 0;
-                    last_btn_state = 1;
+                    last_btn_s3_state = 1;
                     _delay_ms(300);
                     break;
                 }
-                last_btn_state = btn_read(BTN_S3);
+                last_btn_s3_state = btn_read(BTN_S3);
                 _delay_ms(50);
             }
             if (current_state == STATE_INITIAL) {
@@ -92,13 +107,13 @@ void mde_run(void) {
                 
                 // Verifica S3 dentro do loop
                 uint8_t current_s3 = btn_read(BTN_S3);
-                if (current_s3 && !last_btn_state) {
+                if (current_s3 && !last_btn_s3_state) {
                     current_state = STATE_COEFFICIENTS;
                     coef_index = 0;
                     _delay_ms(300);
                     break;
                 }
-                last_btn_state = current_s3;
+                last_btn_s3_state = current_s3;
                 _delay_ms(50);
             }
             break;
@@ -110,27 +125,64 @@ void mde_run(void) {
             lcd_print("Coeficiente");
             lcd_goto(1, 0);
             lcd_print("C");
-            lcd_print_dec(coef_index);
-            lcd_print(":");
-            // Posiciona os asteriscos após "Cx: "
-            for (uint8_t i = 0; i < 12; i++) {
-                lcd_print("*");
+            if (coef_index < 10) {
+                lcd_print("0");
             }
+            lcd_print_dec(coef_index);
+            lcd_print(": ");
+            lcd_print_dec(coefficients[coef_index]);
             
-            // Aguarda próximo pressionamento de S3 ou outros botões
+            // Aguarda botões para ajustar coeficiente ou navegar
             while(current_state == STATE_COEFFICIENTS) {
                 uint8_t current_s3 = btn_read(BTN_S3);
-                if (current_s3 && !last_btn_state) {
+                uint8_t current_s2 = btn_read(BTN_S2);
+                uint8_t current_s1 = btn_read(BTN_S1);
+                
+                // Botão S3 (Menu) - próximo coeficiente ou volta ao inicial
+                if (current_s3 && !last_btn_s3_state) {
                     coef_index++;
                     if (coef_index > 15) {
                         current_state = STATE_INITIAL;
                         coef_index = 0;
                     }
-                    last_btn_state = 1;
+                    last_btn_s3_state = 1;
                     _delay_ms(300);
                     break;
                 }
-                last_btn_state = current_s3;
+                
+                // Botão S2 (▲) - incrementa coeficiente
+                if (current_s2 && !last_btn_s2_state) {
+                    if (coefficients[coef_index] < COEF_MAX) {
+                        coefficients[coef_index]++;
+                        mde_update_filter(); // Atualiza o filtro
+                        
+                        // Atualiza display imediatamente
+                        lcd_goto(1, 5);
+                        lcd_print("   "); // Limpa valor antigo
+                        lcd_goto(1, 5);
+                        lcd_print_dec(coefficients[coef_index]);
+                    }
+                    _delay_ms(150); // Debounce menor para repetição
+                }
+                
+                // Botão S1 (▼) - decrementa coeficiente
+                if (current_s1 && !last_btn_s1_state) {
+                    if (coefficients[coef_index] > COEF_MIN) {
+                        coefficients[coef_index]--;
+                        mde_update_filter(); // Atualiza o filtro
+                        
+                        // Atualiza display imediatamente
+                        lcd_goto(1, 5);
+                        lcd_print("   "); // Limpa valor antigo
+                        lcd_goto(1, 5);
+                        lcd_print_dec(coefficients[coef_index]);
+                    }
+                    _delay_ms(150); // Debounce menor para repetição
+                }
+                
+                last_btn_s3_state = current_s3;
+                last_btn_s2_state = current_s2;
+                last_btn_s1_state = current_s1;
                 _delay_ms(50);
             }
             break;
