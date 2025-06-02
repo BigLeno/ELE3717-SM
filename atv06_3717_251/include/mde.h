@@ -2,6 +2,7 @@
 #define MDE_H
 
 #include <stdint.h>
+#include "eeprom.h" // Adicionado include da EEPROM
 
 // Estados da máquina de estados
 typedef enum {
@@ -20,5 +21,7 @@ void mde_run(void);
 state_t mde_get_state(void);
 void mde_set_state(state_t new_state);
 void mde_update_filter(void);
+void mde_save_coefficients(void);
+void mde_load_coefficients(void);
 
 #endif // MDE_H

@@ -1,6 +1,7 @@
 #include "mde.h"
 #include "lcd.h"
 #include "btn.h"
+#include "eeprom.h"
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -14,16 +15,40 @@ static uint8_t coefficients[NUM_COEFFICIENTS] = {0}; // Array de coeficientes in
 void mde_init(void) {
     current_state = STATE_INITIAL;
     coef_index = 0;
-    // Inicializa coeficientes com valores padrão
-    for (uint8_t i = 0; i < NUM_COEFFICIENTS; i++) {
-        coefficients[i] = 128; // Valor médio
-    }
+    // Carrega coeficientes da EEPROM
+    mde_load_coefficients();
 }
 
 void mde_update_filter(void) {
     // Função para aplicar os coeficientes ao filtro FIR
     // Implementação específica do filtro será adicionada aqui
     // Por enquanto, apenas um placeholder
+}
+
+void mde_save_coefficients(void) {
+    eeprom_save_coefficients(coefficients, NUM_COEFFICIENTS);
+}
+
+void mde_load_coefficients(void) {
+    eeprom_load_coefficients(coefficients, NUM_COEFFICIENTS);
+    
+    // Verifica se há valores válidos na EEPROM (primeira inicialização)
+    // Se todos os coeficientes forem 0xFF (EEPROM virgem), inicializa com valores padrão
+    uint8_t all_empty = 1;
+    for (uint8_t i = 0; i < NUM_COEFFICIENTS; i++) {
+        if (coefficients[i] != 0xFF) {
+            all_empty = 0;
+            break;
+        }
+    }
+    
+    if (all_empty) {
+        // Inicializa com valores padrão e salva na EEPROM
+        for (uint8_t i = 0; i < NUM_COEFFICIENTS; i++) {
+            coefficients[i] = 128; // Valor médio
+        }
+        mde_save_coefficients();
+    }
 }
 
 void mde_run(void) {
@@ -155,6 +180,7 @@ void mde_run(void) {
                     if (coefficients[coef_index] < COEF_MAX) {
                         coefficients[coef_index]++;
                         mde_update_filter(); // Atualiza o filtro
+                        eeprom_save_coefficient(coef_index, coefficients[coef_index]); // Salva na EEPROM
                         
                         // Atualiza display imediatamente
                         lcd_goto(1, 5);
@@ -170,6 +196,7 @@ void mde_run(void) {
                     if (coefficients[coef_index] > COEF_MIN) {
                         coefficients[coef_index]--;
                         mde_update_filter(); // Atualiza o filtro
+                        eeprom_save_coefficient(coef_index, coefficients[coef_index]); // Salva na EEPROM
                         
                         // Atualiza display imediatamente
                         lcd_goto(1, 5);
