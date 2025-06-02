@@ -5,23 +5,10 @@
 
 #include "lcd.h"
 #include "spi.h"
+#include "adc.h"
 #include "max7219.h"
 
 
-// --- Funções ADC ---
-
-void adc_init() {
-    ADMUX = (1 << REFS0); // AVcc ref
-    ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
-    DIDR0 = (1 << ADC4D) | (1 << ADC5D);
-}
-
-uint16_t adc_read(uint8_t channel) {
-    ADMUX = (ADMUX & 0xF0) | (channel & 0x0F);
-    ADCSRA |= (1 << ADSC);
-    while (ADCSRA & (1 << ADSC));
-    return ADCW;
-}
 
 // --- Função para mostrar bits como string com espaços ---
 void bits_to_string(uint8_t val, char* str) {

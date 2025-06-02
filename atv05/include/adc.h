@@ -1,0 +1,10 @@
+#ifndef ADC_H
+#define ADC_H
+
+#include <stdint.h>
+
+void adc_init(void);
+uint16_t adc_read(uint8_t channel);
+uint8_t adc_get_pos(uint8_t channel);
+
+#endif // ADC_H
