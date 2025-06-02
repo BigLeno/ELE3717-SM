@@ -33,9 +33,11 @@ int main() {
         switch(current_state) {
             case STATE_INITIAL:
                 lcd_clear();
-                lcd_goto(0, 0);
+                // Centraliza "ELE-3717" (8 chars) -> posição (16-8)/2 = 4
+                lcd_goto(0, 4);
                 lcd_print("ELE-3717");
-                lcd_goto(1, 0);
+                // Centraliza "FILTRO FIR" (10 chars) -> posição (16-10)/2 = 3
+                lcd_goto(1, 3);
                 lcd_print("FILTRO FIR");
                 
                 // Aguarda qualquer botão para mudar de estado
@@ -48,7 +50,8 @@ int main() {
                 
             case STATE_BUTTONS:
                 lcd_clear();
-                lcd_goto(0, 0);
+                // Centraliza "Press buttons:" (14 chars) -> posição (16-14)/2 = 1
+                lcd_goto(0, 1);
                 lcd_print("Press buttons:");
                 
                 while(current_state == STATE_BUTTONS) {
