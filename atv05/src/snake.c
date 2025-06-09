@@ -5,17 +5,18 @@
 #include <stdlib.h>
 
 void game_init(Game* game) {
-    // Inicializar cobra no centro
+    // Inicializar cobra sempre no centro (3,3) para garantir espaço
     game->snake.length = 3;
     game->snake.direction = DIR_RIGHT;
-    game->snake.segments[0] = (Position){4, 4}; // cabeça
-    game->snake.segments[1] = (Position){3, 4};
-    game->snake.segments[2] = (Position){2, 4}; // cauda
+    game->snake.segments[0] = (Position){3, 3}; // cabeça no centro
+    game->snake.segments[1] = (Position){2, 3}; // corpo
+    game->snake.segments[2] = (Position){1, 3}; // cauda
     
     game->score = 0;
     game->game_over = 0;
-    
-    spawn_food(game);
+    game->growth_timer = 0;
+    game->move_speed_ms = INITIAL_MOVE_SPEED;
+    game->game_over_timer = 0;
 }
 
 Direction get_joystick_direction(void) {
@@ -25,14 +26,14 @@ Direction get_joystick_direction(void) {
     uint16_t x_val = adc_read(4);
     uint16_t y_val = adc_read(5);
     
-    // Zona morta para evitar mudanças acidentais
+    // Deadzone otimizado para controle mais responsivo
     if (x_val < 300) {
         current_dir = DIR_LEFT;
-    } else if (x_val > 700) {
+    } else if (x_val > 724) {
         current_dir = DIR_RIGHT;
     } else if (y_val < 300) {
         current_dir = DIR_UP;
-    } else if (y_val > 700) {
+    } else if (y_val > 724) {
         current_dir = DIR_DOWN;
     }
     
@@ -48,30 +49,11 @@ Direction get_joystick_direction(void) {
     return current_dir;
 }
 
-void spawn_food(Game* game) {
-    uint8_t valid_position = 0;
-    
-    while (!valid_position) {
-        game->food.x = rand() % BOARD_SIZE;
-        game->food.y = rand() % BOARD_SIZE;
-        
-        valid_position = 1;
-        // Verificar se a comida não está na cobra
-        for (uint8_t i = 0; i < game->snake.length; i++) {
-            if (game->snake.segments[i].x == game->food.x && 
-                game->snake.segments[i].y == game->food.y) {
-                valid_position = 0;
-                break;
-            }
-        }
-    }
-}
-
 uint8_t check_collision(const Snake* snake) {
     Position head = snake->segments[0];
     
     // Colisão com paredes
-    if (head.x >= BOARD_SIZE || head.y >= BOARD_SIZE) {
+    if (head.x < 0 || head.x >= BOARD_SIZE || head.y < 0 || head.y >= BOARD_SIZE) {
         return 1;
     }
     
@@ -86,55 +68,125 @@ uint8_t check_collision(const Snake* snake) {
 }
 
 void game_update(Game* game) {
-    if (game->game_over) return;
+    if (game->game_over) {
+        // Incrementar timer de game over
+        game->game_over_timer += game->move_speed_ms;
+        return;
+    }
     
     game->snake.direction = get_joystick_direction();
+    
+    // Incrementar timer de crescimento baseado no delay atual
+    game->growth_timer += game->move_speed_ms;
+    
+    // Verificar se deve crescer
+    if (game->growth_timer >= GROWTH_INTERVAL) {
+        game->growth_timer = 0;
+        
+        // Crescer cobra
+        if (game->snake.length < MAX_SNAKE_LENGTH) {
+            game->snake.length++;
+            game->score += 10;
+            
+            // Acelerar o movimento de forma mais suave
+            if (game->move_speed_ms > MIN_MOVE_SPEED) {
+                uint16_t speed_reduction = SPEED_DECREASE;
+                
+                // Aceleração progressiva mais equilibrada
+                if (game->snake.length > 8) {
+                    speed_reduction = SPEED_DECREASE + 3;
+                }
+                if (game->snake.length > 15) {
+                    speed_reduction = SPEED_DECREASE + 5;
+                }
+                if (game->snake.length > 25) {
+                    speed_reduction = SPEED_DECREASE + 8;
+                }
+                
+                game->move_speed_ms -= speed_reduction;
+                if (game->move_speed_ms < MIN_MOVE_SPEED) {
+                    game->move_speed_ms = MIN_MOVE_SPEED;
+                }
+            }
+        }
+    }
     
     // Mover cobra
     Position new_head = game->snake.segments[0];
     
     switch (game->snake.direction) {
-        case DIR_UP:    new_head.y = (new_head.y == 0) ? BOARD_SIZE - 1 : new_head.y - 1; break;
-        case DIR_DOWN:  new_head.y = (new_head.y + 1) % BOARD_SIZE; break;
-        case DIR_LEFT:  new_head.x = (new_head.x == 0) ? BOARD_SIZE - 1 : new_head.x - 1; break;
-        case DIR_RIGHT: new_head.x = (new_head.x + 1) % BOARD_SIZE; break;
+        case DIR_UP:    new_head.y = new_head.y - 1; break;
+        case DIR_DOWN:  new_head.y = new_head.y + 1; break;
+        case DIR_LEFT:  new_head.x = new_head.x - 1; break;
+        case DIR_RIGHT: new_head.x = new_head.x + 1; break;
     }
     
-    // Verificar se comeu a comida
-    uint8_t ate_food = (new_head.x == game->food.x && new_head.y == game->food.y);
+    // Verificar colisões antes de mover
+    if (new_head.x < 0 || new_head.x >= BOARD_SIZE || 
+        new_head.y < 0 || new_head.y >= BOARD_SIZE) {
+        game->game_over = 1;
+        game->game_over_timer = 0;
+        return;
+    }
     
-    // Mover segmentos
-    for (uint8_t i = game->snake.length; i > 0; i--) {
+    // Verificar colisão com próprio corpo
+    for (uint8_t i = 0; i < game->snake.length; i++) {
+        if (new_head.x == game->snake.segments[i].x && 
+            new_head.y == game->snake.segments[i].y) {
+            game->game_over = 1;
+            game->game_over_timer = 0;
+            return;
+        }
+    }
+    
+    // Mover segmentos da cobra (shift para direita)
+    for (uint8_t i = game->snake.length - 1; i > 0; i--) {
         game->snake.segments[i] = game->snake.segments[i - 1];
     }
     game->snake.segments[0] = new_head;
-    
-    if (ate_food) {
-        game->snake.length++;
-        game->score += 10;
-        spawn_food(game);
-    }
-    
-    // Verificar colisões
-    if (check_collision(&game->snake)) {
-        game->game_over = 1;
-    }
 }
 
 void draw_game(const Game* game) {
     max7219_clear();
     
     if (game->game_over) {
-        // Mostrar padrão de game over
-        for (uint8_t i = 1; i <= 8; i++) {
-            max7219_send(i, 0xFF);
+        // Animação de game over mais elaborada
+        static uint8_t animation_phase = 0;
+        animation_phase++;
+        
+        if ((animation_phase / 4) % 4 == 0) {
+            // Fase 1: Toda a matriz acesa
+            for (uint8_t i = 1; i <= 8; i++) {
+                max7219_send(i, 0xFF);
+            }
+        } else if ((animation_phase / 4) % 4 == 1) {
+            // Fase 2: Apenas bordas
+            max7219_send(1, 0xFF); // Linha superior
+            max7219_send(8, 0xFF); // Linha inferior
+            for (uint8_t i = 2; i <= 7; i++) {
+                max7219_send(i, 0x81); // Laterais
+            }
+        } else if ((animation_phase / 4) % 4 == 2) {
+            // Fase 3: Cruz central
+            for (uint8_t i = 1; i <= 8; i++) {
+                if (i == 4 || i == 5) {
+                    max7219_send(i, 0xFF); // Linhas centrais
+                } else {
+                    max7219_send(i, 0x18); // Colunas centrais
+                }
+            }
+        } else {
+            // Fase 4: Matriz vazia (piscar)
+            for (uint8_t i = 1; i <= 8; i++) {
+                max7219_send(i, 0x00);
+            }
         }
         return;
     }
     
     uint8_t display_data[8] = {0};
     
-    // Desenhar cobra
+    // Desenhar cobra com diferentes intensidades
     for (uint8_t i = 0; i < game->snake.length; i++) {
         uint8_t x = game->snake.segments[i].x;
         uint8_t y = game->snake.segments[i].y;
@@ -143,12 +195,14 @@ void draw_game(const Game* game) {
         }
     }
     
-    // Desenhar comida (piscar)
-    static uint8_t blink_counter = 0;
-    blink_counter++;
-    if ((blink_counter / 5) % 2) { // Piscar a cada ~5 frames
-        if (game->food.x < 8 && game->food.y < 8) {
-            display_data[game->food.y] |= (1 << game->food.x);
+    // Destacar cabeça da cobra (piscar mais rápido)
+    static uint8_t head_blink = 0;
+    head_blink++;
+    if ((head_blink / 3) % 2 && game->snake.length > 0) {
+        uint8_t head_x = game->snake.segments[0].x;
+        uint8_t head_y = game->snake.segments[0].y;
+        if (head_x < 8 && head_y < 8) {
+            display_data[head_y] ^= (1 << head_x); // XOR para piscar
         }
     }
     
