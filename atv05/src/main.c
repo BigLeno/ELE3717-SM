@@ -10,16 +10,19 @@
 #include "max7219.h"
 #include "snake.h"
 
-// Função para delay variável
+// Função para delay variável usando loops com constantes
 void variable_delay_ms(uint16_t ms) {
-    while (ms > 0) {
-        if (ms >= 10) {
-            _delay_ms(10);
-            ms -= 10;
-        } else {
-            _delay_ms(1);
-            ms--;
-        }
+    while (ms >= 100) {
+        _delay_ms(100);
+        ms -= 100;
+    }
+    while (ms >= 10) {
+        _delay_ms(10);
+        ms -= 10;
+    }
+    while (ms >= 1) {
+        _delay_ms(1);
+        ms -= 1;
     }
 }
 
@@ -44,14 +47,13 @@ int main() {
     lcd_print("Length: 3");
     
     uint8_t last_length = 3;
-    uint16_t last_speed = INITIAL_MOVE_SPEED;
     
     while (1) {
         game_update(&game);
         draw_game(&game);
         
-        // Atualizar LCD quando necessário
-        if (game.snake.length != last_length || game.move_speed_ms != last_speed || game.game_over) {
+        // Atualizar LCD apenas quando realmente necessário
+        if (game.snake.length != last_length || game.game_over) {
             lcd_clear();
             if (game.game_over) {
                 lcd_goto(0, 0);
@@ -67,26 +69,32 @@ int main() {
                 lcd_print_dec(game.snake.length);
             }
             last_length = game.snake.length;
-            last_speed = game.move_speed_ms;
         }
         
         // Reset automático do jogo após animação de game over
         if (game.game_over && game.game_over_timer >= GAME_OVER_ANIMATION_TIME) {
             game_init(&game); // Reiniciar jogo automaticamente
             last_length = 3;
-            last_speed = INITIAL_MOVE_SPEED;
             
-            // Mostrar tela de reinício brevemente
+            // Mostrar tela de reinício muito brevemente
             lcd_clear();
             lcd_goto(0, 0);
-            lcd_print("Restarting...");
-            _delay_ms(500);
+            lcd_print("New Game!");
+            _delay_ms(200); // Usar constante diretamente
         }
         
-        // Usar velocidade de movimento otimizada
-        uint16_t current_delay = game.move_speed_ms;
-        if (current_delay < 30) current_delay = 30;   // Mínimo mais responsivo
-        if (current_delay > 250) current_delay = 250; // Máximo mais ágil
+        // Velocidade extremamente otimizada para responsividade máxima
+        uint16_t current_delay;
+        
+        if (game.game_over) {
+            // Durante game over, usar delay mínimo para animação fluida
+            current_delay = 40;
+        } else {
+            // Durante jogo, usar velocidade otimizada
+            current_delay = game.move_speed_ms;
+            if (current_delay < 50) current_delay = 50;   // Mínimo extremamente responsivo
+            if (current_delay > 350) current_delay = 350; // Máximo reduzido
+        }
         
         variable_delay_ms(current_delay);
     }

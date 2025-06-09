@@ -8,6 +8,7 @@ void game_init(Game* game) {
     // Inicializar cobra sempre no centro (3,3) para garantir espaço
     game->snake.length = 3;
     game->snake.direction = DIR_RIGHT;
+    game->snake.pending_direction = DIR_RIGHT; // Inicializar direção pendente
     game->snake.segments[0] = (Position){3, 3}; // cabeça no centro
     game->snake.segments[1] = (Position){2, 3}; // corpo
     game->snake.segments[2] = (Position){1, 3}; // cauda
@@ -20,39 +21,28 @@ void game_init(Game* game) {
 }
 
 Direction get_joystick_direction(void) {
-    static Direction current_dir = DIR_RIGHT;
-    static Direction last_dir = DIR_RIGHT;
-    
     uint16_t x_val = adc_read(4);
     uint16_t y_val = adc_read(5);
     
-    // Deadzone otimizado para controle mais responsivo
-    if (x_val < 300) {
-        current_dir = DIR_LEFT;
-    } else if (x_val > 724) {
-        current_dir = DIR_RIGHT;
-    } else if (y_val < 300) {
-        current_dir = DIR_UP;
-    } else if (y_val > 724) {
-        current_dir = DIR_DOWN;
+    // Deadzone extremamente responsivo - quase sem zona morta
+    if (x_val < 450) {
+        return DIR_LEFT;
+    } else if (x_val > 574) {
+        return DIR_RIGHT;
+    } else if (y_val < 450) {
+        return DIR_UP;
+    } else if (y_val > 574) {
+        return DIR_DOWN;
     }
     
-    // Evitar que a cobra vá na direção oposta
-    if ((current_dir == DIR_UP && last_dir == DIR_DOWN) ||
-        (current_dir == DIR_DOWN && last_dir == DIR_UP) ||
-        (current_dir == DIR_LEFT && last_dir == DIR_RIGHT) ||
-        (current_dir == DIR_RIGHT && last_dir == DIR_LEFT)) {
-        current_dir = last_dir;
-    }
-    
-    last_dir = current_dir;
-    return current_dir;
+    // Retorna direção inválida se estiver na zona morta
+    return (Direction)255; // Valor inválido para indicar zona morta
 }
 
 uint8_t check_collision(const Snake* snake) {
     Position head = snake->segments[0];
     
-    // Colisão com paredes
+    // Colisão com paredes melhorada - verificação mais rigorosa
     if (head.x < 0 || head.x >= BOARD_SIZE || head.y < 0 || head.y >= BOARD_SIZE) {
         return 1;
     }
@@ -70,11 +60,26 @@ uint8_t check_collision(const Snake* snake) {
 void game_update(Game* game) {
     if (game->game_over) {
         // Incrementar timer de game over
-        game->game_over_timer += game->move_speed_ms;
+        game->game_over_timer += 50; // Timer fixo para animação consistente
         return;
     }
     
-    game->snake.direction = get_joystick_direction();
+    // Ler direção do joystick a cada frame
+    Direction joystick_dir = get_joystick_direction();
+    
+    // Atualizar direção pendente apenas se joystick não estiver na zona morta
+    if (joystick_dir != (Direction)255) {
+        // Verificar se não é direção oposta
+        if (!((joystick_dir == DIR_UP && game->snake.direction == DIR_DOWN) ||
+              (joystick_dir == DIR_DOWN && game->snake.direction == DIR_UP) ||
+              (joystick_dir == DIR_LEFT && game->snake.direction == DIR_RIGHT) ||
+              (joystick_dir == DIR_RIGHT && game->snake.direction == DIR_LEFT))) {
+            game->snake.pending_direction = joystick_dir;
+        }
+    }
+    
+    // Aplicar direção pendente no movimento
+    game->snake.direction = game->snake.pending_direction;
     
     // Incrementar timer de crescimento baseado no delay atual
     game->growth_timer += game->move_speed_ms;
@@ -88,19 +93,22 @@ void game_update(Game* game) {
             game->snake.length++;
             game->score += 10;
             
-            // Acelerar o movimento de forma mais suave
+            // Acelerar o movimento de forma muito mais gradual
             if (game->move_speed_ms > MIN_MOVE_SPEED) {
                 uint16_t speed_reduction = SPEED_DECREASE;
                 
-                // Aceleração progressiva mais equilibrada
-                if (game->snake.length > 8) {
-                    speed_reduction = SPEED_DECREASE + 3;
+                // Aceleração muito mais suave e progressiva
+                if (game->snake.length > 5) {
+                    speed_reduction = SPEED_DECREASE + 2; // Acelera pouco após 5 segmentos
                 }
-                if (game->snake.length > 15) {
-                    speed_reduction = SPEED_DECREASE + 5;
+                if (game->snake.length > 12) {
+                    speed_reduction = SPEED_DECREASE + 4; // Acelera um pouco mais após 12
                 }
-                if (game->snake.length > 25) {
-                    speed_reduction = SPEED_DECREASE + 8;
+                if (game->snake.length > 20) {
+                    speed_reduction = SPEED_DECREASE + 6; // Acelera mais após 20
+                }
+                if (game->snake.length > 30) {
+                    speed_reduction = SPEED_DECREASE + 8; // Acelera ainda mais após 30
                 }
                 
                 game->move_speed_ms -= speed_reduction;
@@ -121,9 +129,15 @@ void game_update(Game* game) {
         case DIR_RIGHT: new_head.x = new_head.x + 1; break;
     }
     
-    // Verificar colisões antes de mover
-    if (new_head.x < 0 || new_head.x >= BOARD_SIZE || 
-        new_head.y < 0 || new_head.y >= BOARD_SIZE) {
+    // Verificar colisões de forma mais robusta
+    // Primeiro verificar limites das coordenadas
+    if (new_head.x < 0 || new_head.x >= BOARD_SIZE) {
+        game->game_over = 1;
+        game->game_over_timer = 0;
+        return;
+    }
+    
+    if (new_head.y < 0 || new_head.y >= BOARD_SIZE) {
         game->game_over = 1;
         game->game_over_timer = 0;
         return;
@@ -139,7 +153,7 @@ void game_update(Game* game) {
         }
     }
     
-    // Mover segmentos da cobra (shift para direita)
+    // Mover segmentos da cobra
     for (uint8_t i = game->snake.length - 1; i > 0; i--) {
         game->snake.segments[i] = game->snake.segments[i - 1];
     }

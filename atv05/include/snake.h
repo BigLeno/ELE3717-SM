@@ -5,11 +5,11 @@
 
 #define BOARD_SIZE 8
 #define MAX_SNAKE_LENGTH 64
-#define INITIAL_MOVE_SPEED 200   // Movimento mais fluido (200ms)
-#define SPEED_DECREASE 10        // Aceleração mais suave (10ms)
-#define MIN_MOVE_SPEED 60        // Velocidade mínima mais rápida (60ms)
+#define INITIAL_MOVE_SPEED 300   // Velocidade inicial mais rápida para responsividade
+#define SPEED_DECREASE 8         // Aceleração gradual mantida
+#define MIN_MOVE_SPEED 70        // Velocidade mínima ainda mais responsiva
 #define GROWTH_INTERVAL 1000     // Cresce a cada 1000ms
-#define GAME_OVER_ANIMATION_TIME 2000  // Duração da animação de game over
+#define GAME_OVER_ANIMATION_TIME 1500  // Animação rápida
 
 typedef struct {
     uint8_t x;
@@ -27,6 +27,7 @@ typedef struct {
     Position segments[MAX_SNAKE_LENGTH];
     uint8_t length;
     Direction direction;
+    Direction pending_direction; // Nova direção pendente
 } Snake;
 
 typedef struct {
