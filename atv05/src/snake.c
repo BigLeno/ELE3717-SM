@@ -24,14 +24,14 @@ Direction get_joystick_direction(void) {
     uint16_t x_val = adc_read(4);
     uint16_t y_val = adc_read(5);
     
-    // Deadzone extremamente responsivo - quase sem zona morta
-    if (x_val < 450) {
+    // Deadzone muito mais responsivo - zona morta mínima
+    if (x_val < 400) {
         return DIR_LEFT;
-    } else if (x_val > 574) {
+    } else if (x_val > 624) {
         return DIR_RIGHT;
-    } else if (y_val < 450) {
+    } else if (y_val < 624) {
         return DIR_UP;
-    } else if (y_val > 574) {
+    } else if (y_val > 400) {
         return DIR_DOWN;
     }
     
@@ -60,16 +60,16 @@ uint8_t check_collision(const Snake* snake) {
 void game_update(Game* game) {
     if (game->game_over) {
         // Incrementar timer de game over
-        game->game_over_timer += 50; // Timer fixo para animação consistente
+        game->game_over_timer += 40; // Timer mais rápido para animação consistente
         return;
     }
     
-    // Ler direção do joystick a cada frame
+    // Ler direção do joystick a cada frame para máxima responsividade
     Direction joystick_dir = get_joystick_direction();
     
-    // Atualizar direção pendente apenas se joystick não estiver na zona morta
+    // Atualizar direção pendente com lógica melhorada
     if (joystick_dir != (Direction)255) {
-        // Verificar se não é direção oposta
+        // Verificar se não é direção oposta - apenas impede 180° instantâneo
         if (!((joystick_dir == DIR_UP && game->snake.direction == DIR_DOWN) ||
               (joystick_dir == DIR_DOWN && game->snake.direction == DIR_UP) ||
               (joystick_dir == DIR_LEFT && game->snake.direction == DIR_RIGHT) ||
@@ -78,7 +78,7 @@ void game_update(Game* game) {
         }
     }
     
-    // Aplicar direção pendente no movimento
+    // Aplicar direção pendente imediatamente
     game->snake.direction = game->snake.pending_direction;
     
     // Incrementar timer de crescimento baseado no delay atual
@@ -93,22 +93,22 @@ void game_update(Game* game) {
             game->snake.length++;
             game->score += 10;
             
-            // Acelerar o movimento de forma muito mais gradual
+            // Aceleração muito mais suave para melhor jogabilidade
             if (game->move_speed_ms > MIN_MOVE_SPEED) {
                 uint16_t speed_reduction = SPEED_DECREASE;
                 
-                // Aceleração muito mais suave e progressiva
-                if (game->snake.length > 5) {
-                    speed_reduction = SPEED_DECREASE + 2; // Acelera pouco após 5 segmentos
+                // Aceleração muito mais gradual e equilibrada
+                if (game->snake.length > 8) {
+                    speed_reduction = SPEED_DECREASE + 1; // Acelera muito pouco após 8 segmentos
                 }
-                if (game->snake.length > 12) {
-                    speed_reduction = SPEED_DECREASE + 4; // Acelera um pouco mais após 12
+                if (game->snake.length > 15) {
+                    speed_reduction = SPEED_DECREASE + 2; // Acelera um pouco mais após 15
                 }
-                if (game->snake.length > 20) {
-                    speed_reduction = SPEED_DECREASE + 6; // Acelera mais após 20
+                if (game->snake.length > 25) {
+                    speed_reduction = SPEED_DECREASE + 3; // Acelera mais após 25
                 }
-                if (game->snake.length > 30) {
-                    speed_reduction = SPEED_DECREASE + 8; // Acelera ainda mais após 30
+                if (game->snake.length > 35) {
+                    speed_reduction = SPEED_DECREASE + 4; // Acelera ainda mais após 35
                 }
                 
                 game->move_speed_ms -= speed_reduction;

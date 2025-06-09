@@ -76,24 +76,24 @@ int main() {
             game_init(&game); // Reiniciar jogo automaticamente
             last_length = 3;
             
-            // Mostrar tela de reinício muito brevemente
+            // Mostrar tela de reinício rapidamente
             lcd_clear();
             lcd_goto(0, 0);
             lcd_print("New Game!");
-            _delay_ms(200); // Usar constante diretamente
+            _delay_ms(150); // Delay ainda mais reduzido
         }
         
-        // Velocidade extremamente otimizada para responsividade máxima
+        // Velocidade otimizada para máxima jogabilidade
         uint16_t current_delay;
         
         if (game.game_over) {
-            // Durante game over, usar delay mínimo para animação fluida
-            current_delay = 40;
+            // Durante game over, usar delay rápido para animação fluida
+            current_delay = 30;
         } else {
-            // Durante jogo, usar velocidade otimizada
+            // Durante jogo, usar velocidade extremamente responsiva
             current_delay = game.move_speed_ms;
-            if (current_delay < 50) current_delay = 50;   // Mínimo extremamente responsivo
-            if (current_delay > 350) current_delay = 350; // Máximo reduzido
+            if (current_delay < 40) current_delay = 40;   // Mínimo ultra responsivo
+            if (current_delay > 280) current_delay = 280; // Máximo mais ágil
         }
         
         variable_delay_ms(current_delay);

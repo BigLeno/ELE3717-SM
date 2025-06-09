@@ -5,11 +5,11 @@
 
 #define BOARD_SIZE 8
 #define MAX_SNAKE_LENGTH 64
-#define INITIAL_MOVE_SPEED 300   // Velocidade inicial mais rápida para responsividade
-#define SPEED_DECREASE 8         // Aceleração gradual mantida
-#define MIN_MOVE_SPEED 70        // Velocidade mínima ainda mais responsiva
+#define INITIAL_MOVE_SPEED 250   // Velocidade inicial mais rápida e responsiva
+#define SPEED_DECREASE 6         // Aceleração muito mais gradual
+#define MIN_MOVE_SPEED 80        // Velocidade mínima controlável
 #define GROWTH_INTERVAL 1000     // Cresce a cada 1000ms
-#define GAME_OVER_ANIMATION_TIME 1500  // Animação rápida
+#define GAME_OVER_ANIMATION_TIME 1200  // Animação mais rápida
 
 typedef struct {
     uint8_t x;
