@@ -72,10 +72,13 @@ uint8_t fir_process(uint16_t input) {
         filter.index = 0;
     }
     
-    // Normaliza saída para 8 bits
-    // Ajusta para compensar a soma dos coeficientes passa-baixa
-    output = output >> 14; // Divisão aproximada otimizada para filtro passa-baixa
+    // Normalização melhorada para máximo aproveitamento da faixa dinâmica
+    // Máximo teórico: 1023 × 255 × 16 = 4,173,840
+    // Para usar toda faixa 0-255: dividir por (4,173,840 / 255) = 16,368
+    // Aproximação: shift 14 (÷16,384) está próximo e é eficiente
+    output = output >> 14;
     
+    // Proteção contra overflow (redundante, mas garante segurança)
     if (output > 255) {
         output = 255;
     }

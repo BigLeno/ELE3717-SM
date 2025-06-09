@@ -2,15 +2,25 @@
 #include <avr/io.h>
 
 void adc_init(void) {
-    // Configura referência como AVCC (5V)
+    // ADMUX = 01000000b
+    // Bit 7-6: REFS = 01 → AVCC como referência (5V)
+    // Bit 5: ADLAR = 0 → Resultado justificado à direita
+    // Bit 4: Reservado
+    // Bit 3-0: MUX = 0000 → Canal ADC0 (PC0)
     ADMUX = (1 << REFS0);
     
-    // Habilita ADC e configura prescaler para 128 (125kHz @ 16MHz)
+    // ADCSRA = 10000111b
+    // Bit 7: ADEN = 1 → Habilita ADC
+    // Bit 6: ADSC = 0 → Não inicia conversão ainda
+    // Bit 5: ADATE = 0 → Modo single conversion
+    // Bit 4: ADIF = 0 → Flag de interrupção
+    // Bit 3: ADIE = 0 → Interrupção desabilitada
+    // Bit 2-0: ADPS = 111 → Prescaler 128
     ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
     
-    // Configura PC0 (A0) como entrada analógica
-    DDRC &= ~(1 << PC0);
-    PORTC &= ~(1 << PC0); // Desabilita pull-up
+    // Configura PC0 como entrada de alta impedância
+    DDRC &= ~(1 << PC0);    // Entrada (tri-state)
+    PORTC &= ~(1 << PC0);   // Pull-up desabilitado
 }
 
 uint16_t adc_read(uint8_t channel) {
