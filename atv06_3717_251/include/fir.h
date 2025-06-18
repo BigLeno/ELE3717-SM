@@ -11,12 +11,12 @@
 // Estrutura do filtro FIR
 typedef struct {
     uint16_t delay_line[FIR_NUM_TAPS];  // Linha de atraso para amostras
-    uint8_t coefficients[FIR_NUM_TAPS]; // Coeficientes do filtro
+    float coefficients[FIR_NUM_TAPS];   // Coeficientes do filtro (agora float)
     uint8_t index;                      // Índice circular da linha de atraso
 } fir_filter_t;
 
 void fir_init(void);
-void fir_set_coefficients(uint8_t *coeffs);
+void fir_set_coefficients(float *coeffs);
 uint8_t fir_process(uint16_t input);
 void fir_output_dac(uint8_t value);
 

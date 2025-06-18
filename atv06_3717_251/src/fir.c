@@ -9,23 +9,24 @@ void fir_init(void) {
         filter.delay_line[i] = 0;
     }
     
-    // Inicializa coeficientes com valores de filtro passa-baixa
-    filter.coefficients[0] = 255;
-    filter.coefficients[1] = 240;
-    filter.coefficients[2] = 220;
-    filter.coefficients[3] = 195;
-    filter.coefficients[4] = 165;
-    filter.coefficients[5] = 135;
-    filter.coefficients[6] = 105;
-    filter.coefficients[7] = 80;
-    filter.coefficients[8] = 60;
-    filter.coefficients[9] = 45;
-    filter.coefficients[10] = 35;
-    filter.coefficients[11] = 25;
-    filter.coefficients[12] = 20;
-    filter.coefficients[13] = 15;
-    filter.coefficients[14] = 10;
-    filter.coefficients[15] = 5;
+    // Coeficientes do filtro FIR passa-baixa (fc=2Hz, fs=100Hz) com 3 casas decimais
+    // Calculados com scipy.signal.firwin() e arredondados conforme análise Python
+    filter.coefficients[0] = 0.009f;   // 0.009000
+    filter.coefficients[1] = 0.013f;   // 0.013000
+    filter.coefficients[2] = 0.027f;   // 0.027000
+    filter.coefficients[3] = 0.047f;   // 0.047000
+    filter.coefficients[4] = 0.071f;   // 0.071000
+    filter.coefficients[5] = 0.095f;   // 0.095000
+    filter.coefficients[6] = 0.114f;   // 0.114000
+    filter.coefficients[7] = 0.124f;   // 0.124000
+    filter.coefficients[8] = 0.124f;   // 0.124000
+    filter.coefficients[9] = 0.114f;   // 0.114000
+    filter.coefficients[10] = 0.095f;  // 0.095000
+    filter.coefficients[11] = 0.071f;  // 0.071000
+    filter.coefficients[12] = 0.047f;  // 0.047000
+    filter.coefficients[13] = 0.027f;  // 0.027000
+    filter.coefficients[14] = 0.013f;  // 0.013000
+    filter.coefficients[15] = 0.009f;  // 0.009000
     
     filter.index = 0;
     
@@ -40,7 +41,7 @@ void fir_init(void) {
     PORTB &= ~((1 << PB0) | (1 << PB1) | (1 << PB2) | (1 << PB3) | (1 << PB4) | (1 << PB5));
 }
 
-void fir_set_coefficients(uint8_t *coeffs) {
+void fir_set_coefficients(float *coeffs) {
     for (uint8_t i = 0; i < FIR_NUM_TAPS; i++) {
         filter.coefficients[i] = coeffs[i];
     }
@@ -50,13 +51,13 @@ uint8_t fir_process(uint16_t input) {
     // Adiciona nova amostra na linha de atraso
     filter.delay_line[filter.index] = input;
     
-    // Calcula saída do filtro FIR
-    uint32_t output = 0;
+    // Calcula saída do filtro FIR usando aritmética float
+    float output = 0.0f;
     uint8_t delay_idx = filter.index;
     
     for (uint8_t i = 0; i < FIR_NUM_TAPS; i++) {
-        // Multiplica amostra pelo coeficiente
-        output += (uint32_t)filter.delay_line[delay_idx] * filter.coefficients[i];
+        // Multiplica amostra pelo coeficiente (float)
+        output += (float)filter.delay_line[delay_idx] * filter.coefficients[i];
         
         // Decrementa índice da linha de atraso (circular)
         if (delay_idx == 0) {
@@ -72,18 +73,20 @@ uint8_t fir_process(uint16_t input) {
         filter.index = 0;
     }
     
-    // Normalização melhorada para máximo aproveitamento da faixa dinâmica
-    // Máximo teórico: 1023 × 255 × 16 = 4,173,840
-    // Para usar toda faixa 0-255: dividir por (4,173,840 / 255) = 16,368
-    // Aproximação: shift 14 (÷16,384) está próximo e é eficiente
-    output = output >> 14;
+    // Normalização para saída 8 bits (0-255)
+    // Como a soma dos coeficientes é aproximadamente 1.0, 
+    // o resultado já está na faixa adequada para ADC de 10 bits
+    // Mapeia de 0-1023 para 0-255
+    output = output * 255.0f / 1023.0f;
     
-    // Proteção contra overflow (redundante, mas garante segurança)
-    if (output > 255) {
-        output = 255;
+    // Proteção contra overflow/underflow
+    if (output > 255.0f) {
+        output = 255.0f;
+    } else if (output < 0.0f) {
+        output = 0.0f;
     }
     
-    return (uint8_t)output;
+    return (uint8_t)(output + 0.5f); // Arredondamento
 }
 
 void fir_output_dac(uint8_t value) {
