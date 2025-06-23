@@ -11,28 +11,26 @@
 #include "fir.h"
 
 // Flags de botões (definidas como extern em mde.c)
-volatile uint8_t flag_btn_s1 = 0;
-volatile uint8_t flag_btn_s2 = 0;
-volatile uint8_t flag_btn_s3 = 0;
+volatile uint8_t flag_btn_s1 = 1;
+volatile uint8_t flag_btn_s2 = 1;
+volatile uint8_t flag_btn_s3 = 1;
 
 // ISRs dos botões
-ISR(INT0_vect) { flag_btn_s1 = 1; }
-ISR(INT1_vect) { flag_btn_s2 = 1; }
-ISR(PCINT2_vect) {
-    if (!(PIND & (1 << PD4))) flag_btn_s3 = 1;
+ISR(PCINT1_vect) {
+    // S1: PC1, S2: PC2, S3: PC3
+    if (!(PINC & (1 << PC1))) flag_btn_s1 = 1;
+    if (!(PINC & (1 << PC2))) flag_btn_s2 = 1;
+    if (!(PINC & (1 << PC3))) flag_btn_s3 = 1;
 }
 
 void setup_interrupts(void) {
-    // INT0 (PD2) - S1
-    EICRA |= (1 << ISC01);
-    EIMSK |= (1 << INT0);
-    // INT1 (PD3) - S2
-    EICRA |= (1 << ISC11);
-    EIMSK |= (1 << INT1);
-    // PCINT20 (PD4) - S3
-    PCICR |= (1 << PCIE2);
-    PCMSK2 |= (1 << PCINT20);
-    PORTD |= (1 << PD2) | (1 << PD3) | (1 << PD4); // Pull-ups
+    // PCINT9 (PC1) - S1
+    // PCINT10 (PC2) - S2
+    // PCINT11 (PC3) - S3
+    PCICR |= (1 << PCIE1); // Habilita interrupção do grupo PCINT[14:8] (PORTC)
+    PCMSK1 |= (1 << PCINT9) | (1 << PCINT10) | (1 << PCINT11);
+    // Pull-ups para os botões
+    PORTC |= (1 << PC1) | (1 << PC2) | (1 << PC3);
 }
 
 int main() {
