@@ -8,23 +8,32 @@ volatile uint8_t flag_btn_s1 = 0;
 volatile uint8_t flag_btn_s2 = 0;
 volatile uint8_t flag_btn_s3 = 0;
 
-// ISR dos botões (PCINT1_vect para PC1, PC2, PC3)
+// Debounce robusto: só seta a flag se o botão estava solto antes e agora está pressionado
+static uint8_t last_state_s1 = 1;
+static uint8_t last_state_s2 = 1;
+static uint8_t last_state_s3 = 1;
+
 ISR(PCINT1_vect) {
     // S1: PC1
-    if (!(PINC & (1 << BTN_S1))) {
+    uint8_t curr_s1 = (PINC & (1 << BTN_S1)) ? 1 : 0;
+    if (last_state_s1 && !curr_s1) {
         flag_btn_s1 = 1;
-        _delay_ms(20); // debounce simples (bloqueante, mas seguro)
     }
+    last_state_s1 = curr_s1;
+
     // S2: PC2
-    if (!(PINC & (1 << BTN_S2))) {
+    uint8_t curr_s2 = (PINC & (1 << BTN_S2)) ? 1 : 0;
+    if (last_state_s2 && !curr_s2) {
         flag_btn_s2 = 1;
-        _delay_ms(20);
     }
+    last_state_s2 = curr_s2;
+
     // S3: PC3
-    if (!(PINC & (1 << BTN_S3))) {
+    uint8_t curr_s3 = (PINC & (1 << BTN_S3)) ? 1 : 0;
+    if (last_state_s3 && !curr_s3) {
         flag_btn_s3 = 1;
-        _delay_ms(20);
     }
+    last_state_s3 = curr_s3;
 }
 
 void btn_init(void) {
