@@ -2,7 +2,8 @@
 #define MDE_H
 
 #include <stdint.h>
-#include "eeprom.h" // Adicionado include da EEPROM
+#include "eeprom.h"
+#include "btn.h" // Inclua btn.h para as flags
 
 // Estados da máquina de estados
 typedef enum {

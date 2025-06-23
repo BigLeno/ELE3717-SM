@@ -10,19 +10,6 @@
 #include "adc.h"
 #include "fir.h"
 
-// Flags de botões (definidas como extern em mde.c)
-volatile uint8_t flag_btn_s1 = 1;
-volatile uint8_t flag_btn_s2 = 1;
-volatile uint8_t flag_btn_s3 = 1;
-
-// ISRs dos botões
-ISR(PCINT1_vect) {
-    // S1: PC1, S2: PC2, S3: PC3
-    if (!(PINC & (1 << PC1))) flag_btn_s1 = 1;
-    if (!(PINC & (1 << PC2))) flag_btn_s2 = 1;
-    if (!(PINC & (1 << PC3))) flag_btn_s3 = 1;
-}
-
 void setup_interrupts(void) {
     // PCINT9 (PC1) - S1
     // PCINT10 (PC2) - S2
