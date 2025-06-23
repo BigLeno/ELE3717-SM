@@ -93,17 +93,7 @@ void fir_output_dac(uint8_t value) {
     // Saída para malha R2R usando PC4, PC5, PB0-PB5
     // PC4 = bit 0 (LSB), PC5 = bit 1, PB0 = bit 2, ..., PB5 = bit 7 (MSB)
     
-    // Limpa bits anteriores
-    PORTC &= ~((1 << PC4) | (1 << PC5));
-    PORTB &= ~((1 << PB0) | (1 << PB1) | (1 << PB2) | (1 << PB3) | (1 << PB4) | (1 << PB5));
+    PORTB = value >> 2; // PB0-PB5 (6 bits)    
+    PORTC = (value << 4) & 0x30;
     
-    // Configura bits conforme o valor
-    if (value & 0x01) PORTC |= (1 << PC4); // bit 0
-    if (value & 0x02) PORTC |= (1 << PC5); // bit 1
-    if (value & 0x04) PORTB |= (1 << PB0); // bit 2
-    if (value & 0x08) PORTB |= (1 << PB1); // bit 3
-    if (value & 0x10) PORTB |= (1 << PB2); // bit 4
-    if (value & 0x20) PORTB |= (1 << PB3); // bit 5
-    if (value & 0x40) PORTB |= (1 << PB4); // bit 6
-    if (value & 0x80) PORTB |= (1 << PB5); // bit 7
 }
