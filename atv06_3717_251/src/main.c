@@ -42,7 +42,6 @@ int main() {
             i = 0; // Decrementa até 0
         }
 
-        fir_output_dac(i);
-        // _delay_us(100);
+        fir_output_dac(filtered_output);
     }
 }
