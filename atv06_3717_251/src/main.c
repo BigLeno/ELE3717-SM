@@ -29,18 +29,10 @@ int main() {
     setup_interrupts();
     sei();
 
-    uint8_t i = 0;
-
     while(1) {
         // mde_run();
         uint16_t adc_value = adc_read_a0();
         uint8_t filtered_output = fir_process(adc_value);
-
-        if (i == 0){
-            i = 255; // Inicia com 255 para garantir que o primeiro valor seja 255
-        } else {
-            i = 0; // Decrementa até 0
-        }
 
         fir_output_dac(filtered_output);
     }

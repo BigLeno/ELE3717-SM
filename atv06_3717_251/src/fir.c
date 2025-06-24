@@ -8,28 +8,27 @@ void fir_init(void) {
     for (uint8_t i = 0; i < FIR_NUM_TAPS; i++) {
         filter.delay_line[i] = 0;
     }
-    
-    // Coeficientes do filtro FIR passa-baixa (fc=2Hz, fs=100Hz) com 3 casas decimais
-    // Calculados com scipy.signal.firwin() e arredondados conforme análise Python
-    filter.coefficients[0] = 0.009f;   // 0.009000
-    filter.coefficients[1] = 0.013f;   // 0.013000
-    filter.coefficients[2] = 0.027f;   // 0.027000
-    filter.coefficients[3] = 0.047f;   // 0.047000
-    filter.coefficients[4] = 0.071f;   // 0.071000
-    filter.coefficients[5] = 0.095f;   // 0.095000
-    filter.coefficients[6] = 0.114f;   // 0.114000
-    filter.coefficients[7] = 0.124f;   // 0.124000
-    filter.coefficients[8] = 0.124f;   // 0.124000
-    filter.coefficients[9] = 0.114f;   // 0.114000
-    filter.coefficients[10] = 0.095f;  // 0.095000
-    filter.coefficients[11] = 0.071f;  // 0.071000
-    filter.coefficients[12] = 0.047f;  // 0.047000
-    filter.coefficients[13] = 0.027f;  // 0.027000
-    filter.coefficients[14] = 0.013f;  // 0.013000
-    filter.coefficients[15] = 0.009f;  // 0.009000
-    
+
+    // Coeficientes do filtro FIR passa-baixa (fs=100Hz, fc=2Hz, 16 taps, 3 casas decimais)
+    filter.coefficients[0]  = 0.010f;
+    filter.coefficients[1]  = 0.015f;
+    filter.coefficients[2]  = 0.028f;
+    filter.coefficients[3]  = 0.049f;
+    filter.coefficients[4]  = 0.072f;
+    filter.coefficients[5]  = 0.094f;
+    filter.coefficients[6]  = 0.112f;
+    filter.coefficients[7]  = 0.121f;
+    filter.coefficients[8]  = 0.121f;
+    filter.coefficients[9]  = 0.112f;
+    filter.coefficients[10] = 0.094f;
+    filter.coefficients[11] = 0.072f;
+    filter.coefficients[12] = 0.049f;
+    filter.coefficients[13] = 0.028f;
+    filter.coefficients[14] = 0.015f;
+    filter.coefficients[15] = 0.010f;
+
     filter.index = 0;
-    
+
     // Configura pinos de saída para DAC R2R
     // PC4, PC5 como saída
     DDRC |= (1 << PC4) | (1 << PC5);

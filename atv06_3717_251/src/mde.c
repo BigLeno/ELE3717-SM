@@ -24,26 +24,24 @@ void mde_init(void) {
 }
 
 void mde_load_default_coefficients(void) {
-    // Coeficientes calculados no Python com scipy.signal.firwin()
-    // fc=2Hz, fs=100Hz, 16 taps, arredondados para 3 casas decimais
-    // Soma total: 1.000000 para normalização correta
-    coefficients[0] = 0.009f;   // 0.009000
-    coefficients[1] = 0.013f;   // 0.013000
-    coefficients[2] = 0.027f;   // 0.027000
-    coefficients[3] = 0.047f;   // 0.047000
-    coefficients[4] = 0.071f;   // 0.071000
-    coefficients[5] = 0.095f;   // 0.095000
-    coefficients[6] = 0.114f;   // 0.114000
-    coefficients[7] = 0.124f;   // 0.124000
-    coefficients[8] = 0.124f;   // 0.124000
-    coefficients[9] = 0.114f;   // 0.114000
-    coefficients[10] = 0.095f;  // 0.095000
-    coefficients[11] = 0.071f;  // 0.071000
-    coefficients[12] = 0.047f;  // 0.047000
-    coefficients[13] = 0.027f;  // 0.027000
-    coefficients[14] = 0.013f;  // 0.013000
-    coefficients[15] = 0.009f;  // 0.009000
-    
+    // Coeficientes passa-baixa fs=100Hz, fc=2Hz, 16 taps, 3 casas decimais
+    coefficients[0]  = 0.010f;
+    coefficients[1]  = 0.015f;
+    coefficients[2]  = 0.028f;
+    coefficients[3]  = 0.049f;
+    coefficients[4]  = 0.072f;
+    coefficients[5]  = 0.094f;
+    coefficients[6]  = 0.112f;
+    coefficients[7]  = 0.121f;
+    coefficients[8]  = 0.121f;
+    coefficients[9]  = 0.112f;
+    coefficients[10] = 0.094f;
+    coefficients[11] = 0.072f;
+    coefficients[12] = 0.049f;
+    coefficients[13] = 0.028f;
+    coefficients[14] = 0.015f;
+    coefficients[15] = 0.010f;
+
     mde_update_filter();
 }
 
