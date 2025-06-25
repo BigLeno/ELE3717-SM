@@ -57,7 +57,7 @@ void mde_save_coefficients(void) {
         float value = coefficients[i];
         uint8_t *p = (uint8_t*)&value;
         for (uint8_t b = 0; b < 4; b++) {
-            eeprom_write_byte(addr++, p[b]);
+            eeprom_write_data(addr++, p[b]);
         }
     }
 }
@@ -84,6 +84,7 @@ void mde_run(void) {
                 lcd_goto(0, 2);
                 lcd_print("Coef Float");
                 break;
+            // Nenhum default e nenhum STATE_BUTTONS
         }
         last_state = current_state;
     }
@@ -127,12 +128,18 @@ void mde_run(void) {
                 flag_btn_s3 = 0;
                 _delay_ms(300);
             }
-            if (flag_btn_s1 || flag_btn_s2) {
+            if (flag_btn_s1) {
+                if (coef_index > 0) coef_index--;
                 flag_btn_s1 = 0;
+                _delay_ms(150);
+            }
+            if (flag_btn_s2) {
+                if (coef_index < 15) coef_index++;
                 flag_btn_s2 = 0;
                 _delay_ms(150);
             }
             break;
+        // Nenhum default e nenhum STATE_BUTTONS
     }
 }
 
