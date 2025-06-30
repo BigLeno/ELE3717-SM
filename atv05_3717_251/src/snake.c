@@ -23,22 +23,25 @@ Direction get_joystick_direction(void) {
     uint16_t x_val = adc_read(4);
     uint16_t y_val = adc_read(5);
 
-    // Ajuste de zona morta e priorização do eixo dominante
-    int16_t x_centered = (int16_t)x_val - 512;
-    int16_t y_centered = (int16_t)y_val - 512;
-    int16_t deadzone = 80; // zona morta +/-80
+    // Ajuste fino: se necessário, altere o valor central para o seu joystick
+    const int16_t x_center = 512;
+    const int16_t y_center = 512;
+    int16_t x_centered = (int16_t)x_val - x_center;
+    int16_t y_centered = (int16_t)y_val - y_center;
+    int16_t deadzone = 20; // zona morta ainda menor
 
+    // Se ambos os eixos estão próximos do centro, não muda direção
     if (abs(x_centered) < deadzone && abs(y_centered) < deadzone) {
         return (Direction)255; // zona morta
     }
 
-    // Prioriza o eixo com maior deslocamento
-    if (abs(x_centered) > abs(y_centered)) {
+    // Eixo Y invertido: para cima é y_centered > deadzone
+    if (abs(y_centered) > abs(x_centered)) {
+        if (y_centered > deadzone)  return DIR_UP;    // Para cima
+        if (y_centered < -deadzone) return DIR_DOWN;  // Para baixo
+    } else {
         if (x_centered < -deadzone) return DIR_LEFT;
         if (x_centered > deadzone)  return DIR_RIGHT;
-    } else {
-        if (y_centered < -deadzone) return DIR_UP;
-        if (y_centered > deadzone)  return DIR_DOWN;
     }
 
     return (Direction)255;
