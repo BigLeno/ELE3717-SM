@@ -23,20 +23,20 @@ void game_init(Game* game) {
 Direction get_joystick_direction(void) {
     uint16_t x_val = adc_read(4);
     uint16_t y_val = adc_read(5);
-    
-    // Deadzone muito mais responsivo - zona morta mínima
-    if (x_val < 400) {
-        return DIR_LEFT;
-    } else if (x_val > 624) {
-        return DIR_RIGHT;
-    } else if (y_val < 624) {
-        return DIR_UP;
-    } else if (y_val > 400) {
-        return DIR_DOWN;
+    int16_t x_offset = (int16_t)x_val - 512;
+    int16_t y_offset = (int16_t)y_val - 512;
+    // Deadzone maior para evitar ruído
+    if (abs(x_offset) < 120 && abs(y_offset) < 120) {
+        return (Direction)255; // zona morta
     }
-    
-    // Retorna direção inválida se estiver na zona morta
-    return (Direction)255; // Valor inválido para indicar zona morta
+    // Prioriza o eixo com maior desvio
+    if (abs(x_offset) > abs(y_offset)) {
+        if (x_offset < 0) return DIR_LEFT;
+        else return DIR_RIGHT;
+    } else {
+        if (y_offset < 0) return DIR_UP;
+        else return DIR_DOWN;
+    }
 }
 
 uint8_t check_collision(const Snake* snake) {
