@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/rgabr/OneDrive/Documentos/Github/ELE3717-SM/atv05_3717_251/atv05_3717_251",
-      "program": "c:/Users/rgabr/OneDrive/Documentos/Github/ELE3717-SM/atv05_3717_251/atv05_3717_251/build/Debug/outDebug",
+      "cwd": "c:/Users/rgabr/OneDrive/Documentos/Github/ELE3717-SM/atv06_3717_251/src",
+      "program": "c:/Users/rgabr/OneDrive/Documentos/Github/ELE3717-SM/atv06_3717_251/src/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
