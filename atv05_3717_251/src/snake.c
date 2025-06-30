@@ -72,18 +72,26 @@ void game_update(Game* game) {
     }
 
     // Ler direção do joystick a cada frame para máxima responsividade
-    static Direction last_dir = DIR_RIGHT;
     Direction joystick_dir = get_joystick_direction();
-
-    // Atualizar direção pendente com lógica melhorada e resposta mais fluida
-    if (joystick_dir != (Direction)255 &&
-        !((joystick_dir == DIR_UP && game->snake.direction == DIR_DOWN) ||
-          (joystick_dir == DIR_DOWN && game->snake.direction == DIR_UP) ||
-          (joystick_dir == DIR_LEFT && game->snake.direction == DIR_RIGHT) ||
-          (joystick_dir == DIR_RIGHT && game->snake.direction == DIR_LEFT))) {
-        last_dir = joystick_dir;
+    // Interpretação relativa: esquerda/direita são relativas à cabeça da cobra
+    if (joystick_dir == DIR_LEFT) {
+        // Girar 90° à esquerda
+        switch (game->snake.direction) {
+            case DIR_UP:    game->snake.direction = DIR_LEFT; break;
+            case DIR_DOWN:  game->snake.direction = DIR_RIGHT; break;
+            case DIR_LEFT:  game->snake.direction = DIR_DOWN; break;
+            case DIR_RIGHT: game->snake.direction = DIR_UP; break;
+        }
+    } else if (joystick_dir == DIR_RIGHT) {
+        // Girar 90° à direita
+        switch (game->snake.direction) {
+            case DIR_UP:    game->snake.direction = DIR_RIGHT; break;
+            case DIR_DOWN:  game->snake.direction = DIR_LEFT; break;
+            case DIR_LEFT:  game->snake.direction = DIR_UP; break;
+            case DIR_RIGHT: game->snake.direction = DIR_DOWN; break;
+        }
     }
-    game->snake.direction = last_dir;
+    // Para cima mantém a direção, para baixo ignora
 
     // Mover cobra
     Position new_head = game->snake.segments[0];
