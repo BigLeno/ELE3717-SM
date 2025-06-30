@@ -39,13 +39,6 @@ int main() {
     
     Game game;
     game_init(&game);
-    
-    lcd_clear();
-    lcd_goto(0, 0);
-    lcd_print("Snake Game!");
-    lcd_goto(1, 0);
-    lcd_print("Length: 3");
-    
     uint8_t last_length = 3;
     
     while (1) {
@@ -79,12 +72,6 @@ int main() {
         if (game.game_over && game.game_over_timer >= GAME_OVER_ANIMATION_TIME) {
             game_init(&game); // Reiniciar jogo automaticamente
             last_length = 3;
-
-            // Mostrar tela de reinício rapidamente
-            lcd_clear();
-            lcd_goto(0, 0);
-            lcd_print("New Game!");
-            _delay_ms(150); // Delay ainda mais reduzido
         }
         
         // Velocidade otimizada para máxima jogabilidade
