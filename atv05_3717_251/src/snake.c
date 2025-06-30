@@ -20,8 +20,8 @@ void game_init(Game* game) {
 }
 
 Direction get_joystick_direction(void) {
-    uint16_t x_val = adc_read(4);
-    uint16_t y_val = adc_read(5);
+    uint16_t y_val = adc_read(4);
+    uint16_t x_val = adc_read(5);
 
     // Ajuste fino: se necessário, altere o valor central para o seu joystick
     const int16_t x_center = 512;
@@ -32,16 +32,16 @@ Direction get_joystick_direction(void) {
 
     // Se ambos os eixos estão próximos do centro, não muda direção
     if (abs(x_centered) < deadzone && abs(y_centered) < deadzone) {
-        return (Direction)255; // zona morta
+        return (Direction)255;
     }
 
-    // Eixo Y invertido: para cima é y_centered > deadzone
+    // Direção dominante: responde imediatamente ao movimento
     if (abs(y_centered) > abs(x_centered)) {
-        if (y_centered > deadzone)  return DIR_UP;    // Para cima
-        if (y_centered < -deadzone) return DIR_DOWN;  // Para baixo
+        if (y_centered > deadzone)  return DIR_UP;    // Para baixo (invertido)
+        if (y_centered < -deadzone) return DIR_DOWN;      // Para cima (invertido)
     } else {
-        if (x_centered < -deadzone) return DIR_LEFT;
-        if (x_centered > deadzone)  return DIR_RIGHT;
+        if (x_centered < -deadzone) return DIR_RIGHT;
+        if (x_centered > deadzone)  return DIR_LEFT;
     }
 
     return (Direction)255;
@@ -123,56 +123,24 @@ void game_update(Game* game) {
 void draw_game(const Game* game) {
     max7219_clear();
 
-    if (game->game_over) {
-        // Animação de game over mais elaborada
-        static uint8_t animation_phase = 0;
-        animation_phase++;
-
-        if ((animation_phase / 4) % 4 == 0) {
-            // Fase 1: Toda a matriz acesa
-            for (uint8_t i = 1; i <= 8; i++) {
-                max7219_send(i, 0xFF);
-            }
-        } else if ((animation_phase / 4) % 4 == 1) {
-            // Fase 2: Apenas bordas
-            max7219_send(1, 0xFF); // Linha superior
-            max7219_send(8, 0xFF); // Linha inferior
-            for (uint8_t i = 2; i <= 7; i++) {
-                max7219_send(i, 0x81); // Laterais
-            }
-        } else if ((animation_phase / 4) % 4 == 2) {
-            // Fase 3: Cruz central
-            for (uint8_t i = 1; i <= 8; i++) {
-                if (i == 4 || i == 5) {
-                    max7219_send(i, 0xFF); // Linhas centrais
-                } else {
-                    max7219_send(i, 0x18); // Colunas centrais
-                }
-            }
-        } else {
-            // Fase 4: Matriz vazia (piscar)
-            for (uint8_t i = 1; i <= 8; i++) {
-                max7219_send(i, 0x00);
-            }
-        }
-        return;
+    // Mostrar retorno do joystick no display
+    Direction dir = get_joystick_direction();
+    uint8_t pattern[8] = {0};
+    // Direção para cima: linha do topo
+    if (dir == DIR_UP) {
+        pattern[0] = 0xFF;
+    } else if (dir == DIR_DOWN) {
+        pattern[7] = 0xFF;
+    } else if (dir == DIR_LEFT) {
+        for (uint8_t i = 0; i < 8; i++) pattern[i] = 0x80;
+    } else if (dir == DIR_RIGHT) {
+        for (uint8_t i = 0; i < 8; i++) pattern[i] = 0x01;
+    } else {
+        // Zona morta: ponto central
+        pattern[3] = 0x18;
+        pattern[4] = 0x18;
     }
-    
-    uint8_t display_data[8] = {0};
-    
-    // Desenhar cobra com diferentes intensidades
-    for (uint8_t i = 0; i < game->snake.length; i++) {
-        uint8_t x = game->snake.segments[i].x;
-        uint8_t y = game->snake.segments[i].y;
-        if (x < 8 && y < 8) {
-            display_data[y] |= (1 << x);
-        }
-    }
-    
-    // Não pisca mais a cabeça da cobra
-    
-    // Enviar dados para o display
     for (uint8_t i = 0; i < 8; i++) {
-        max7219_send(i + 1, display_data[i]);
+        max7219_send(i + 1, pattern[i]);
     }
 }
