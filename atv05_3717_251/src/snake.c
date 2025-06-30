@@ -215,4 +215,28 @@ void draw_game(const Game* game) {
     for (uint8_t i = 0; i < 8; i++) {
         max7219_send(i + 1, display_data[i]);
     }
+
+    // Mostrar vetores de posição X e Y no LCD
+    // Exemplo: X: 3 2 1 0 0 0 0 0
+    //          Y: 3 3 3 0 0 0 0 0
+    lcd_goto(0, 0);
+    lcd_print("X:");
+    for (uint8_t i = 0; i < MAX_SNAKE_LENGTH; i++) {
+        lcd_print(" ");
+        if (i < game->snake.length) {
+            lcd_print_dec(game->snake.segments[i].x);
+        } else {
+            lcd_print("0");
+        }
+    }
+    lcd_goto(1, 0);
+    lcd_print("Y:");
+    for (uint8_t i = 0; i < MAX_SNAKE_LENGTH; i++) {
+        lcd_print(" ");
+        if (i < game->snake.length) {
+            lcd_print_dec(game->snake.segments[i].y);
+        } else {
+            lcd_print("0");
+        }
+    }
 }

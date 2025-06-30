@@ -48,20 +48,6 @@ int main() {
         
         // Atualizar LCD apenas quando realmente necessário
         if (game.snake.length != last_length || game.game_over) {
-            lcd_clear();
-            if (game.game_over) {
-                lcd_goto(0, 0);
-                lcd_print("GAME OVER!");
-                lcd_goto(1, 0);
-                lcd_print("Final: ");
-                lcd_print_dec(game.snake.length);
-            } else {
-                lcd_goto(0, 0);
-                lcd_print("Snake Game!");
-                lcd_goto(1, 0);
-                lcd_print("Length: ");
-                lcd_print_dec(game.snake.length);
-            }
             last_length = game.snake.length;
         }
         
