@@ -1,84 +1,98 @@
-#include "lcd.h"
-#include <avr/io.h>
-#include <util/delay.h>
+#include <avr/io.h> //definições do componente especificado
+#include <util/delay.h> //biblioteca para o uso das rotinas de _delay_ms e _delay_us()
+#include <avr/pgmspace.h>//para a gravação de dados na memória flash 
 
-// Definições dos pinos e portas do LCD
-#define LCD_PORT PORTD
-#define LCD_DDR DDRD
-#define RS PD2
-#define E  PD3
-
-static void lcd_pulse_enable(void) {
-    LCD_PORT |= (1 << E);
-    _delay_us(1);
-    LCD_PORT &= ~(1 << E);
-    _delay_us(100);
+#include "LCD.h"
+//-----------------------------------------------------------------------------------
+// Sub-rotina para enviar caracteres e comandos ao LCD com via de dados de 4 bits
+//-----------------------------------------------------------------------------------
+//c é o dado e cd indica se é instrução ou caractere (0 ou 1)
+void cmd_LCD(unsigned char c, char cd)
+{
+    if(cd==0) //instrução
+    clr_bit(CONTR_LCD,RS);
+    else //caractere
+    set_bit(CONTR_LCD,RS);
+    //primeiro nibble de dados - 4 MSB
+    #if (nibble_dados)//compila o código para os pinos de dados do LCD nos 4 MSB do PORT
+    DADOS_LCD = (DADOS_LCD & 0x0F)|(0xF0 & c);
+    #else //compila o código para os pinos de dados do LCD nos 4 LSB do PORT
+    DADOS_LCD = (DADOS_LCD & 0xF0)|(c>>4);
+    #endif
+    pulso_enable();
+    #if (nibble_dados) //compila o código para os pinos de dados do LCD nos 4 MSB do PORT
+    DADOS_LCD = (DADOS_LCD & 0x0F) | (0xF0 & (c<<4));
+    #else //compila o código para os pinos de dados do LCD nos 4 LSB do PORT
+    DADOS_LCD = (DADOS_LCD & 0xF0) | (0x0F & c);
+    #endif
+    pulso_enable();
+    if((cd==0) && (c<4)) //se for instrução de retorno ou limpeza espera LCD estar pronto
+    _delay_ms(2);
 }
+//-----------------------------------------------------------------------------------
+//Sub-rotina para inicialização do LCD com via de dados de 4 bits
+//-----------------------------------------------------------------------------------
+void inic_LCD_4bits()//sequência ditada pelo fabricando do circuito integrado HD44780
+{ //o LCD será só escrito. Então, R/W é sempre zero.
+    clr_bit(CONTR_LCD,RS);//RS em zero indicando que o dado para o LCD será uma instrução
+    clr_bit(CONTR_LCD,E);//pino de habilitação em zero
+    _delay_ms(20); /*tempo para estabilizar a tensão do LCD, após VCC
+    ultrapassar 4.5 V (na prática pode ser maior).*/
+    //interface de 8 bits
+    #if (nibble_dados)
+    DADOS_LCD = (DADOS_LCD & 0x0F) | 0x30;
+    #else
+    DADOS_LCD = (DADOS_LCD & 0xF0) | 0x03;
+    #endif
 
-static void lcd_send_nibble(uint8_t nibble) {
-    LCD_PORT &= 0x0F;           // limpando os 4 bits altos
-    LCD_PORT |= (nibble << 4);  // setando os 4 bits altos conforme nibble
-    lcd_pulse_enable();
-}
-
-static void lcd_send_byte(uint8_t data, uint8_t is_data) {
-    if (is_data)
-        LCD_PORT |= (1 << RS);
-    else
-        LCD_PORT &= ~(1 << RS);
-
-    lcd_send_nibble(data >> 4);
-    lcd_send_nibble(data & 0x0F);
-    _delay_us(50);
-}
-
-void lcd_init(void) {
-    LCD_DDR |= (1 << RS) | (1 << E) | (1 << PD4) | (1 << PD5) | (1 << PD6) | (1 << PD7);
-    _delay_ms(40);
-    LCD_PORT &= ~((1 << RS) | (1 << E) | (1 << PD4) | (1 << PD5) | (1 << PD6) | (1 << PD7));
-
-    lcd_send_nibble(0x03);
+    pulso_enable(); //habilitação respeitando os tempos de resposta do LCD
     _delay_ms(5);
-    lcd_send_nibble(0x03);
-    _delay_us(150);
-    lcd_send_nibble(0x03);
-    lcd_send_nibble(0x02);
-
-    lcd_send_byte(0x28, 0); // 4 bits, 2 linhas, fonte 5x8
-    lcd_send_byte(0x0C, 0); // Display ligado, cursor desligado
-    lcd_send_byte(0x06, 0); // Incrementa cursor
-    lcd_send_byte(0x01, 0); // Limpa display
-    _delay_ms(2);
+    pulso_enable();
+    _delay_us(200);
+    pulso_enable(); //até aqui ainda é uma interface de 8 bits.
+    //interface de 4 bits, deve ser enviado duas vezes (a outra está abaixo)
+    #if (nibble_dados)
+    DADOS_LCD = (DADOS_LCD & 0x0F) | 0x20;
+    #else
+    DADOS_LCD = (DADOS_LCD & 0xF0) | 0x02;
+    #endif
+    pulso_enable();
+    cmd_LCD(0x28,0); //interface de 4 bits 2 linhas (aqui se habilita as 2 linhas)
+    //são enviados os 2 nibbles (0x2 e 0x8)
+    cmd_LCD(0x08,0); //desliga o display
+    cmd_LCD(0x01,0); //limpa todo o display
+    cmd_LCD(0x0C,0); //mensagem aparente cursor inativo não piscando
+    cmd_LCD(0x80,0); //inicializa cursor na primeira posição a esquerda - 1a linha
 }
-
-void lcd_clear(void) {
-    lcd_send_byte(0x01, 0);
-    _delay_ms(2);
+//------------------------------------------------------------------------------------
+//Sub-rotina de escrita no LCD - dados armazenados na RAM
+//------------------------------------------------------------------------------------
+void escreve_LCD(char *c)
+{
+    for (; *c!=0;c++) cmd_LCD(*c,1);    
 }
+//------------------------------------------------------------------------------------
+//Conversão de um número em seus digitos individuais – função auxiliar
+//-----------------------------------------------------------------------------------
+void ident_num(unsigned int valor, char *disp, unsigned int qtd_digit)
+{
+    uint8_t n;
+    qtd_digit++; // incrementa para incluir o terminador
 
-void lcd_goto(uint8_t line, uint8_t pos) {
-    uint8_t addr = pos + (line ? 0x40 : 0x00);
-    lcd_send_byte(0x80 | addr, 0);
-}
-
-void lcd_print(const char *str) {
-    while (*str) {
-        lcd_send_byte(*str++, 1);
+    for(n=0; n<qtd_digit; n++) {
+        disp[n] = ' '; //limpa vetor para armazenagem dos digitos
     }
-}
-
-void lcd_print_dec(uint8_t num) {
-    char buf[4];
-    int i = 0;
-    if (num == 0) {
-        lcd_send_byte('0', 1);
+    disp[qtd_digit-1] = '\0';     //coloca o terminador de string
+    n = qtd_digit-2;
+    
+    if (valor == 0) {
+        disp[n] = '0'; // caso especial para zero
         return;
     }
-    while (num > 0 && i < 3) {
-        buf[i++] = (num % 10) + '0';
-        num /= 10;
-    }
-    for (int j = i - 1; j >= 0; j--) {
-        lcd_send_byte(buf[j], 1);
-    }
-}
+    
+    do
+    {
+        disp[n--] = (valor%10) + conv_ascii; //pega o resto da divisão por 10
+        valor /=10; //pega o inteiro da divisão por 10
+    } while (valor!=0 && n >= 0);
+} 
