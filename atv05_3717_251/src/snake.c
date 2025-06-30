@@ -143,15 +143,15 @@ void game_update(Game* game) {
         return;
     }
     
-    // Verificar colisão com próprio corpo
-    for (uint8_t i = 0; i < game->snake.length; i++) {
-        if (new_head.x == game->snake.segments[i].x && 
-            new_head.y == game->snake.segments[i].y) {
-            game->game_over = 1;
-            game->game_over_timer = 0;
-            return;
-        }
-    }
+    // NÃO verifica colisão com o próprio corpo (cobra pode atravessar a si mesma)
+    // for (uint8_t i = 0; i < game->snake.length; i++) {
+    //     if (new_head.x == game->snake.segments[i].x && 
+    //         new_head.y == game->snake.segments[i].y) {
+    //         game->game_over = 1;
+    //         game->game_over_timer = 0;
+    //         return;
+    //     }
+    // }
     
     // Mover segmentos da cobra
     for (uint8_t i = game->snake.length - 1; i > 0; i--) {
