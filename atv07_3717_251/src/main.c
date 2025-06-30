@@ -1,13 +1,18 @@
 
+// --- INCLUDES PRINCIPAIS ---
+#include <stdint.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
-
 #include "lcd.h"
 #include "adc.h"
 #include "modulador.h"
 #include "btn.h"
+
+// Prototipação das funções usadas antes do main
+void lcd_print_bin(uint8_t num);
+void mde(uint16_t msg, volatile uint8_t *sinal_modulado);
 
 // Função para exibir um número em binário no LCD (8 bits)
 void lcd_print_bin(uint8_t num) {
@@ -36,11 +41,11 @@ volatile int8_t inc_dec = 0; // -1 = decremento, 1 = incremento, 0 = nada
 volatile uint8_t estado_mde = ESTADO0;
 volatile uint16_t cont = 0;          // contador de tempo
 volatile uint16_t msg = 0;           // mensagem a ser enviada
-volatile uint8_t sinal_modulado = 0; // sinal modulado
+uint8_t sinal_modulado = 0; // sinal modulado
 volatile uint8_t cont_aux = 0;
 
 void setup();
-void mde(volatile uint16_t msg, volatile uint8_t *sinal_modulado);
+// Removido: declaração antiga incompatível
 
 int main()
 {
@@ -92,7 +97,7 @@ void setup()
     sei();
 }
 
-void mde(volatile uint16_t msg, volatile uint8_t *sinal_modulado)
+void mde(uint16_t msg, volatile uint8_t *sinal_modulado)
 {
     static uint8_t freq_portadora = 100; // frequencia da portadora inicial
 
