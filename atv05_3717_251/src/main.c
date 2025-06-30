@@ -37,7 +37,6 @@ int main() {
     
     Game game;
     game_init(&game);
-    uint8_t last_length = 3;
     
     while (1) {
         game_update(&game);
@@ -69,7 +68,6 @@ int main() {
         // Reset automático do jogo após animação de game over
         if (game.game_over && game.game_over_timer >= GAME_OVER_ANIMATION_TIME) {
             game_init(&game); // Reiniciar jogo automaticamente
-            last_length = 3;
         }
         
         // Velocidade otimizada para máxima jogabilidade
