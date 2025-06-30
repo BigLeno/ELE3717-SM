@@ -34,9 +34,6 @@ int main() {
     adc_init();
     lcd_init();
     
-    // Inicializar gerador de números aleatórios
-    srand(adc_read(0)); // Usar ruído do ADC como semente
-    
     Game game;
     game_init(&game);
     
