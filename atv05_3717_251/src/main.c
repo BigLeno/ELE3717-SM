@@ -51,31 +51,35 @@ int main() {
     while (1) {
         game_update(&game);
         draw_game(&game);
-        
-        // Atualizar LCD apenas quando realmente necessário
-        if (game.snake.length != last_length || game.game_over) {
-            lcd_clear();
-            if (game.game_over) {
-                lcd_goto(0, 0);
-                lcd_print("GAME OVER!");
-                lcd_goto(1, 0);
-                lcd_print("Final: ");
-                lcd_print_dec(game.snake.length);
+
+        // Atualizar LCD sempre mostrando as posições X e Y da cobra
+        lcd_clear();
+        lcd_goto(0, 0);
+        lcd_print("X:");
+        for (uint8_t i = 0; i < MAX_SNAKE_LENGTH; i++) {
+            lcd_print(" ");
+            if (i < game.snake.length) {
+                lcd_print_dec(game.snake.segments[i].x);
             } else {
-                lcd_goto(0, 0);
-                lcd_print("Snake Game!");
-                lcd_goto(1, 0);
-                lcd_print("Length: ");
-                lcd_print_dec(game.snake.length);
+                lcd_print("0");
             }
-            last_length = game.snake.length;
         }
-        
+        lcd_goto(1, 0);
+        lcd_print("Y:");
+        for (uint8_t i = 0; i < MAX_SNAKE_LENGTH; i++) {
+            lcd_print(" ");
+            if (i < game.snake.length) {
+                lcd_print_dec(game.snake.segments[i].y);
+            } else {
+                lcd_print("0");
+            }
+        }
+
         // Reset automático do jogo após animação de game over
         if (game.game_over && game.game_over_timer >= GAME_OVER_ANIMATION_TIME) {
             game_init(&game); // Reiniciar jogo automaticamente
             last_length = 3;
-            
+
             // Mostrar tela de reinício rapidamente
             lcd_clear();
             lcd_goto(0, 0);
