@@ -5,10 +5,10 @@
 
 #define BOARD_SIZE 8
 #define MAX_SNAKE_LENGTH 8
-#define INITIAL_MOVE_SPEED 800   // Velocidade inicial mais lenta
-#define SPEED_DECREASE 6         // Mantém aceleração gradual
-#define MIN_MOVE_SPEED 200       // Velocidade mínima mais lenta
-#define GROWTH_INTERVAL 1500     // Cresce a cada 1500ms
+#define INITIAL_MOVE_SPEED 500   // Velocidade inicial muito mais lenta
+#define SPEED_DECREASE 6         // Aceleração muito mais gradual
+#define MIN_MOVE_SPEED 80        // Velocidade mínima controlável
+#define GROWTH_INTERVAL 1000     // Cresce a cada 1000ms
 #define GAME_OVER_ANIMATION_TIME 1200  // Animação mais rápida
 
 typedef struct {
@@ -34,7 +34,9 @@ typedef struct {
     Snake snake;
     uint16_t score;
     uint8_t game_over;
+    uint16_t growth_timer;
     uint16_t move_speed_ms;
+    uint16_t game_over_timer;
 } Game;
 
 void game_init(Game* game);
