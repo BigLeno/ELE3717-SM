@@ -71,10 +71,10 @@ void game_update(Game* game) {
         return;
     }
 
-    // Ler direção do joystick a cada frame para máxima responsividade
+    // Controle mais natural: só aceita curva quando solta e pressiona de novo (debounce)
+    static uint8_t can_turn = 1;
     Direction joystick_dir = get_joystick_direction();
-    // Interpretação relativa: esquerda/direita são relativas à cabeça da cobra
-    if (joystick_dir == DIR_LEFT) {
+    if (joystick_dir == DIR_LEFT && can_turn) {
         // Girar 90° à esquerda
         switch (game->snake.direction) {
             case DIR_UP:    game->snake.direction = DIR_LEFT; break;
@@ -82,7 +82,8 @@ void game_update(Game* game) {
             case DIR_LEFT:  game->snake.direction = DIR_DOWN; break;
             case DIR_RIGHT: game->snake.direction = DIR_UP; break;
         }
-    } else if (joystick_dir == DIR_RIGHT) {
+        can_turn = 0;
+    } else if (joystick_dir == DIR_RIGHT && can_turn) {
         // Girar 90° à direita
         switch (game->snake.direction) {
             case DIR_UP:    game->snake.direction = DIR_RIGHT; break;
@@ -90,6 +91,10 @@ void game_update(Game* game) {
             case DIR_LEFT:  game->snake.direction = DIR_UP; break;
             case DIR_RIGHT: game->snake.direction = DIR_DOWN; break;
         }
+        can_turn = 0;
+    } else if (joystick_dir == (Direction)255) {
+        // Liberar para aceitar nova curva quando voltar para zona morta
+        can_turn = 1;
     }
     // Para cima mantém a direção, para baixo ignora
 
