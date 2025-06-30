@@ -34,9 +34,7 @@ typedef struct {
     Snake snake;
     uint16_t score;
     uint8_t game_over;
-    uint16_t growth_timer;
     uint16_t move_speed_ms;
-    uint16_t game_over_timer;
 } Game;
 
 void game_init(Game* game);
