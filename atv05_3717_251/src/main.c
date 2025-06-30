@@ -88,12 +88,12 @@ int main() {
         
         if (game.game_over) {
             // Durante game over, usar delay rápido para animação fluida
-            current_delay = 30;
+            current_delay = 60; // Aumenta o delay da animação de game over
         } else {
-            // Durante jogo, usar velocidade extremamente responsiva
+            // Durante jogo, usar velocidade mais confortável
             current_delay = game.move_speed_ms;
-            if (current_delay < 40) current_delay = 40;   // Mínimo ultra responsivo
-            if (current_delay > 280) current_delay = 280; // Máximo mais ágil
+            if (current_delay < 120) current_delay = 120;   // Mínimo mais lento
+            if (current_delay > 400) current_delay = 400;   // Máximo mais lento
         }
         
         variable_delay_ms(current_delay);
