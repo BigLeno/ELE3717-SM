@@ -1,19 +1,35 @@
+/*
+ * atv04_3717_251.c
+ *
+ * Created: 30/06/2025 19:22:57
+ * Author : livia
+ */ 
+
+/*
+ * Projeto 04.c
+ *
+ * Created: 30/05/2025 15:38:20
+ * Author : livia
+ */ 
+
 #define F_CPU 16000000UL
 
+// Bibliotecas
 #include <avr/io.h>
 #include <util/delay.h>
-#include <avr/pgmspace.h>
+#include <avr/interrupt.h>
 #include <stdbool.h>
 #include <stdint.h>
 
-// Definiï¿½ï¿½es para LCD 4 bits em PORTD
+// Defini??es para LCD 4 bits em PORTD
 #define PORT_LCD PORTD
 #define DDR_LCD  DDRD
 #define RS PD2
 #define EN PD3
-#define LCD_DATA_MASK ((1 << PD4) | (1 << PD5) | (1 << PD6) | (1 << PD7))
+#define LCD_DATA_MASK ((1 << PD4)|(1 << PD5)|(1 << PD6)|(1 << PD7))
 
-// Botï¿½es nos pinos PC1, PC2, PC3
+
+// Bot?es nos pinos PC1, PC2, PC3
 #define BTN_S1 PC1
 #define BTN_S2 PC2
 #define BTN_S3 PC3
@@ -21,81 +37,106 @@
 #define set_bit(Y, bit_x)  ((Y) |= (1 << (bit_x)))
 #define clr_bit(Y, bit_x)  ((Y) &= ~(1 << (bit_x)))
 
-// Delays e perï¿½odos para auto-repeat
-#define BTN_DEBOUNCE_MS    20
-#define AUTO_REPEAT_WAIT   5000
-#define AUTO_REPEAT_FAST   100
-#define AUTO_REPEAT_SLOW   500
 
-// Funï¿½ï¿½es LCD
-void lcd_send_nibble(uint8_t val)
-{
-	PORT_LCD &= ~LCD_DATA_MASK;
-	PORT_LCD |= ((val << 4) & LCD_DATA_MASK);
-	set_bit(PORT_LCD, EN);
-	_delay_us(1);
-	clr_bit(PORT_LCD, EN);
-	_delay_us(40);
+// Vari?veis controle
+volatile uint8_t red_val = 0;
+volatile uint8_t green_val = 0;
+volatile uint8_t blue_val = 0;
+volatile int8_t seletor = -1; // -1 = desativado, 0=RED,1=GREEN,2=BLUE
+
+volatile uint8_t incremento = 0;
+volatile uint8_t decremento = 0;
+
+volatile int8_t passo = 1;
+volatile int16_t contagem = 0;
+
+// Para controle de atualiza??o parcial
+uint8_t old_red = 255;
+uint8_t old_green = 255;
+uint8_t old_blue = 255;
+int8_t old_seletor = -2;
+
+// Colunas base para os valores na linha 1
+const uint8_t col_base[3] = {0, 7, 12};
+
+// Fun??es LCD:
+
+//Envia pulso no pino Enable
+#define pulso_enable()       \
+{                       \
+	set_bit(PORT_LCD, EN); \
+	_delay_us(1);        \
+	clr_bit(PORT_LCD, EN); \
+	_delay_us(100);      \
 }
 
-void lcd_send_byte(uint8_t c, uint8_t rs)
-{
+
+void lcd_enviar_nibble(uint8_t val) {
+	// limpa as linhas D4-D7
+	PORT_LCD &= ~LCD_DATA_MASK;
+	// posiciona os 4 bits em D4..D7
+	PORT_LCD |= (val << 4) & LCD_DATA_MASK;
+	pulso_enable();
+}
+
+// Envia um byte inteiro dividindo em dois nibbles para modo 4 bits
+void cmd_LCD(uint8_t c, uint8_t rs) {
 	if (rs)
 	set_bit(PORT_LCD, RS);
 	else
 	clr_bit(PORT_LCD, RS);
-
-	lcd_send_nibble(c >> 4);
-	lcd_send_nibble(c & 0x0F);
-
-	if (rs == 0 && (c == 0x01 || c == 0x02))
+	lcd_enviar_nibble(c >> 4);
+	lcd_enviar_nibble(c & 0x0F);
+	if (rs == 0 && c < 4)
 	_delay_ms(2);
 	else
 	_delay_us(40);
 }
 
-void lcd_init(void)
-{
+// Inicializa o LCD para modo 4 bits, 2 linhas, 5x8 dots
+void inic_LCD_4bits(void) {
 	DDR_LCD |= LCD_DATA_MASK | (1 << RS) | (1 << EN);
-	_delay_ms(40);
+	_delay_ms(40); // Delay power on
+	// Inicialização especial modo 4 bits (sequência do datasheet)
 	clr_bit(PORT_LCD, RS);
-
-	lcd_send_nibble(0x03);
+	lcd_enviar_nibble(0x03);
 	_delay_ms(5);
-	lcd_send_nibble(0x03);
+	lcd_enviar_nibble(0x03);
 	_delay_us(150);
-	lcd_send_nibble(0x03);
+	lcd_enviar_nibble(0x03);
 	_delay_us(150);
-	lcd_send_nibble(0x02);
+	lcd_enviar_nibble(0x02); // Modo 4 bits
 	_delay_us(150);
 
-	lcd_send_byte(0x28, 0);
-	lcd_send_byte(0x08, 0);
-	lcd_send_byte(0x01, 0);
+	cmd_LCD(0x28, 0); // Interface 4 bits, 2 linhas, 5x8 font
+	cmd_LCD(0x08, 0); // Display off
+	cmd_LCD(0x01, 0); // Clear display
 	_delay_ms(2);
-	lcd_send_byte(0x06, 0);
-	lcd_send_byte(0x0C, 0);
+	cmd_LCD(0x06, 0); // Entry mode: incrementa cursor
+	cmd_LCD(0x0C, 0); // Display on, cursor off, blink off
 }
+
 
 void lcd_clear(void)
 {
-	lcd_send_byte(0x01, 0);
+	cmd_LCD(0x01, 0);
 	_delay_ms(2);
 }
 
 void lcd_goto(uint8_t linha, uint8_t coluna)
 {
 	uint8_t addr = coluna + (linha ? 0x40 : 0x00);
-	lcd_send_byte(0x80 | addr, 0);
+	cmd_LCD(0x80 | addr, 0);
 }
 
-void lcd_print(char *str)
-{
-	while (*str)
-	lcd_send_byte(*str++, 1);
+// Escreve string até o terminador null
+void escreve_LCD(char *str) {
+	while (*str) {
+		cmd_LCD(*str++, 1);
+	}
 }
 
-// Imprime nï¿½mero com 3 dï¿½gitos
+// Imprime n?mero com 3 d?gitos
 void lcd_print_num(uint8_t val)
 {
 	char buf[3];
@@ -104,114 +145,90 @@ void lcd_print_num(uint8_t val)
 	buf[2] = (val % 10) + '0';
 
 	for (int i = 0; i < 3; i++)
-	lcd_send_byte(buf[i], 1);
+	cmd_LCD(buf[i], 1);
 }
 
-// Botï¿½es setup e leitura
+void set_color_RGB(void);
+
+ISR(TIMER0_COMPA_vect){
+	
+	if(contagem<100) contagem++;
+	
+	else passo = 100; 
+}
+
+ISR(PCINT1_vect){
+	
+	if(!(PINC & (1<<BTN_S1))) {
+		seletor++;
+		if(seletor==3) seletor=-1;
+	}
+	
+	if(!(PINC & (1<<BTN_S2))) {
+		incremento = 1;
+		TIMSK0 = 0x01;
+	}
+	
+	else
+	{
+		incremento = 0;
+		TIMSK0 = 0x00;
+		passo = 1;
+		contagem = 0;
+	}  
+
+	
+	if(!(PINC & (1<<BTN_S3))) {
+		decremento = 1;
+		TIMSK0 = 0x01;
+	}
+	else 
+	{
+		decremento = 0;
+		TIMSK0 = 0x00;
+		passo = 1;
+		contagem = 0;
+	}
+}
+// Bot?es setup e leitura
 void buttons_init()
 {
 	DDRC &= ~((1 << BTN_S1) | (1 << BTN_S2) | (1 << BTN_S3));
 	PORTC |= (1 << BTN_S1) | (1 << BTN_S2) | (1 << BTN_S3);
 }
 
-bool button_pressed(uint8_t pin)
+void pin_PWM_RGB ()
 {
-	if ((PINC & (1 << pin)) == 0)
-	{
-		_delay_ms(BTN_DEBOUNCE_MS);
-		if ((PINC & (1 << pin)) == 0)
-		return true;
-	}
-	return false;
+	DDRB |= (1<<PB1)|(1<<PB2)|(1<<PB3);
+	
+	 // === TIMER1 ===
+	 // Modo 14 (Fast PWM, TOP = ICR1), NÃO-invertido, prescaler = 8
+	 TCCR1A = 0xA2;
+	 TCCR1B = 0x1A;
+	 
+	 ICR1 = 255; // Limita em 8 bits o valor máximo.
+	 
+	   // === TIMER2 ===
+	   // Modo 5 (Fast PWM com TOP = OCR2A), NÃO-invertido, prescaler = 1
+	   
+	   TCCR2A = 0x83;
+	   TCCR2B = 0x01;
+	   
+	   //Configuração dos pinos de TIMER 0:
+	   TCCR0A = 0x02;
+	   TCCR0B = 0x05;
+	   TIMSK0 = 0x00;
+	   
+	   OCR0A = 254;
 }
-
-typedef struct {
-	bool pressed;
-	uint32_t press_start_ms;
-	uint32_t last_act_ms;
-	bool auto_repeat_active;
-} btn_state_t;
-
-volatile btn_state_t btn_inc = {0};
-volatile btn_state_t btn_dec = {0};
-
-volatile uint32_t millis_count = 0;
-
-void delay_ms_tick(void)
+void set_color_RGB()
 {
-	_delay_ms(1);
-	millis_count++;
-}
+	OCR2A = red_val;      // Define o valor do RG3 - Duty Cycle do led RED
+	OCR1B  = green_val;   // Define o valor do RG2 - Duty Cycle do led GREEN
+	OCR1A = blue_val;     // Define o valor do RG1 - Duty Cycle do led BLUE
+	};
 
-void btn_update(volatile btn_state_t *btn, uint8_t pin)
-{
-	bool currently_pressed = ((PINC & (1 << pin)) == 0);
 
-	if (currently_pressed && !btn->pressed)
-	{
-		btn->pressed = true;
-		btn->press_start_ms = millis_count;
-		btn->last_act_ms = millis_count;
-		btn->auto_repeat_active = false;
-	}
-	else if (!currently_pressed && btn->pressed)
-	{
-		btn->pressed = false;
-		btn->auto_repeat_active = false;
-	}
-	else if (btn->pressed)
-	{
-		uint32_t held_time = millis_count - btn->press_start_ms;
-
-		if (held_time >= AUTO_REPEAT_WAIT)
-		{
-			uint32_t since_last = millis_count - btn->last_act_ms;
-			uint32_t interval = (held_time < AUTO_REPEAT_WAIT * 2) ? AUTO_REPEAT_SLOW : AUTO_REPEAT_FAST;
-			if (since_last >= interval)
-			{
-				btn->auto_repeat_active = true;
-				btn->last_act_ms = millis_count;
-			}
-		}
-	}
-}
-
-bool btn_should_act(volatile btn_state_t *btn, uint8_t pin)
-{
-	static bool last_state_inc = false;
-	static bool last_state_dec = false;
-
-	bool current = ((PINC & (1 << pin)) == 0);
-
-	bool triggered = false;
-
-	if (pin == BTN_S2)
-	{
-		if (current && !last_state_inc) triggered = true;
-		last_state_inc = current;
-	}
-	else if (pin == BTN_S3)
-	{
-		if (current && !last_state_dec) triggered = true;
-		last_state_dec = current;
-	}
-	return triggered || btn->auto_repeat_active;
-}
-
-// Variï¿½veis controle
-volatile uint8_t red_val = 0;
-volatile uint8_t green_val = 0;
-volatile uint8_t blue_val = 0;
-volatile int8_t seletor = 0; // -1 = desativado, 0=RED,1=GREEN,2=BLUE
-
-// Para controle de atualizaï¿½ï¿½o parcial
-uint8_t old_red = 255;
-uint8_t old_green = 255;
-uint8_t old_blue = 255;
-int8_t old_seletor = -2;
-
-// Colunas base para os valores na linha 1
-const uint8_t col_base[3] = {0, 7, 12};
 
 void lcd_update_digit(uint8_t cor_idx, uint8_t val, bool selecionado)
 {
@@ -225,9 +242,9 @@ void lcd_update_digit(uint8_t cor_idx, uint8_t val, bool selecionado)
 	buf[2] = (val % 10) + '0';
 
 	for (int i = 0; i < 3; i++)
-	lcd_send_byte(buf[i], 1);
+	cmd_LCD(buf[i], 1);
 
-	lcd_send_byte(selecionado ? '*' : ' ', 1);
+	cmd_LCD(selecionado ? '*' : ' ', 1);
 }
 
 void lcd_update_partial(void)
@@ -250,14 +267,68 @@ void lcd_update_partial(void)
 	old_seletor = seletor;
 }
 
-int main(void)
+void controle_de_led()
 {
+	
+	if(incremento==1) {
+		switch(seletor){
+			case 0:
+			if(red_val<255){
+				red_val+= passo;
+				set_color_RGB();
+			}
+			break;
+			case 1:
+			if(green_val<255){
+				green_val+= passo;
+				set_color_RGB();
+			}
+			break;
+			case 2:
+			if(blue_val<255){
+				blue_val+= passo;
+				set_color_RGB();
+			}
+			break;
+			default:
+			break;
+		}
+		
+	}
+	
+	if(decremento==1) {
+		switch(seletor){
+			case 0:
+			if(red_val>0){
+				red_val-= passo;
+				set_color_RGB();
+			}
+			break;
+			case 1:
+			if(green_val>0){
+				green_val-= passo;
+				set_color_RGB();
+			}
+			break;
+			case 2:
+			if(blue_val>0){
+				blue_val-= passo;
+				set_color_RGB();
+			}
+			break;
+			default:
+			break;
+		}
+	}
+	}
+
+int main(void) {
 	buttons_init();
-	lcd_init();
+	inic_LCD_4bits();
 
 	lcd_clear();
 	lcd_goto(0, 0);
-	lcd_print("RED  GREEN BLUE");
+	escreve_LCD("RED  GREEN  BLUE");
 
 	old_red = 255;
 	old_green = 255;
@@ -266,72 +337,19 @@ int main(void)
 
 	lcd_update_partial();
 
-	btn_inc.pressed = false;
-	btn_dec.pressed = false;
-	btn_inc.auto_repeat_active = false;
-	btn_dec.auto_repeat_active = false;
-
+	PCICR = (1 << PCIE1);
+	PCMSK1 |= (1<<PCINT9)|(1<<PCINT10)|(1<<PCINT11);
+	
+	pin_PWM_RGB();
+	
+	sei();
+	
 	while (1)
 	{
-		delay_ms_tick();
-
-		btn_update(&btn_inc, BTN_S2);
-		btn_update(&btn_dec, BTN_S3);
-
-		if (button_pressed(BTN_S1))
-		{
-			_delay_ms(100);
-
-			seletor++;
-			if (seletor > 3)
-			seletor = 0;
-			if (seletor == 3)
-			seletor = -1;
-
-			lcd_update_partial();
-
-			while (button_pressed(BTN_S1))
-			delay_ms_tick();
-		}
-
-		if (seletor != -1 && btn_should_act(&btn_inc, BTN_S2))
-		{
-			switch (seletor)
-			{
-				case 0:
-				if (red_val < 255)
-				red_val++;
-				break;
-				case 1:
-				if (green_val < 255)
-				green_val++;
-				break;
-				case 2:
-				if (blue_val < 255)
-				blue_val++;
-				break;
-			}
-			lcd_update_partial();
-		}
-
-		if (seletor != -1 && btn_should_act(&btn_dec, BTN_S3))
-		{
-			switch (seletor)
-			{
-				case 0:
-				if (red_val > 0)
-				red_val--;
-				break;
-				case 1:
-				if (green_val > 0)
-				green_val--;
-				break;
-				case 2:
-				if (blue_val > 0)
-				blue_val--;
-				break;
-			}
-			lcd_update_partial();
-		}
-	}
+		lcd_update_partial();
+		_delay_ms(100);
+		controle_de_led();
+		
 }
+}
+
