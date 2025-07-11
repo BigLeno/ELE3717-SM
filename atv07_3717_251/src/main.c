@@ -14,13 +14,13 @@
 
 volatile int8_t inc_dec = 0; // -1 = decremento, 1 = incremento, 0 = nada
 volatile uint8_t estado_mde = ESTADO0;
-volatile uint16_t cont = 0;     // contador de tempo
-volatile uint8_t flag_update_lcd = 0;
-volatile uint16_t timer_lcd_count = 0;
+volatile uint16_t cont = 0;          // contador de tempo
+volatile uint16_t msg = 0;           // mensagem a ser enviada
 volatile uint8_t sinal_modulado = 0; // sinal modulado
+volatile uint8_t cont_aux = 0;
 
 void setup();
-void mde(uint16_t *freq_portadora, uint16_t msg, volatile uint8_t *sinal_modulado);
+void mde(volatile uint16_t msg, volatile uint8_t *sinal_modulado);
 
 int main()
 {
@@ -29,198 +29,181 @@ int main()
 
     inic_LCD_4bits(); // inicializa o LCD
 
-    uint16_t msg = 0; // mensagem a ser enviada
-    uint16_t freq_portadora = 100; // frequencia inicial da portadora
-
     while (1)
     {
-        // Atualiza modulação em alta frequência
-        ler_adc(&msg); // le o valor do ADC e armazena em msg
-        
-        // Chama a modulação apropriada baseada no estado
-        switch (estado_mde) {
-            case ESTADO0:
-                sinal_modulado = modula_am(freq_portadora, msg);
-                break;
-            case ESTADO1:
-                sinal_modulado = modula_fm(freq_portadora, msg);
-                break;
-            case ESTADO2:
-                sinal_modulado = modula_ask(freq_portadora, msg);
-                break;
-            case ESTADO3:
-                sinal_modulado = modula_fsk(freq_portadora, msg);
-                break;
-        }
-        
+        // if (cont_aux >= 7 && (estado_mde == ESTADO2 || estado_mde == ESTADO3))
+        // {
+        //     // Apenas para ASK e FSK, segura o valor do ADC por 7 iterações
+        //     msg = ler_adc();
+        //     if (msg < 15)
+        //     { // pequeno tratamento de ruido
+        //         msg = 0;
+        //     }
+        //     cont_aux = 0;
+        // }
+        msg = ler_adc(); // lê o valor do ADC
+
+        //mde(msg, &sinal_modulado);
         envia_dados(sinal_modulado); // envia o sinal modulado para o DAC
-        
-        // Atualiza LCD apenas quando necessário
-        if (flag_update_lcd) {
-            mde(&freq_portadora, msg, &sinal_modulado);
-            flag_update_lcd = 0;
-        }
-        
-        _delay_us(45); // delay para 20 kHz de taxa de amostragem (50μs total incluindo processamento)
     }
 }
 
 void setup()
 {
-    // Configuração do PORTC
-    DDRC = 0x00;               // Limpa todas as configurações
-    DDRC &= ~(1 << PC0);       // PC0 como entrada (ADC)
-    DDRC &= ~0x0E;             // PC1, PC2, PC3 como entrada (botões)
-    DDRC |= 0x30;              // PC4, PC5 como saída (DAC bits 0-1)
-    
-    // Pull-up nos botões (apenas PC1, PC2, PC3)
-    PORTC = (PORTC & 0xF1) | 0x0E;  // Habilita pull-up nos botões sem afetar DAC
-    
-    // Configuração do PORTD (LCD)
-    DDRD = 0x00; 
-    DDRD |= 0xFC;              // PD2, PD3, PD4-PD7 como saída (LCD)
+    DDRC = 0x00;
+    DDRC &= ~(1 << PC0); // entrada x
+    DDRC &= ~0x0E;       // setando PC1 a PC3 como entrada, BTNS
 
-    // Configuração do PORTB (DAC bits 2-7)
-    DDRB = 0x3F;               // PB0-PB5 como saída (DAC)
+    DDRD = 0x00;
+    DDRD |= 0xFC; // setando PD2, PD3 PD4 a PD7 como saida, LCD
 
-    // Configuração das interrupções dos botões
-    PCICR = 0x02;              // Habilita interrupção PCINT1
-    PCMSK1 = 0x0E;             // Máscara para PC1, PC2, PC3
+    DDRC |= 0x30; // setando PC5 a PC6 como saida, coef (DA0, DA1)
+    DDRB = 0x3F;  // setando PB0 a PB5 como saida, coef (DA2 - DA7)
 
-    // Configuração do Timer1 para controle do LCD
-    TCCR1A = 0x00;             // Modo CTC
-    TCCR1B = 0x0A;             // Prescaler de 8
+    PCICR = 0x02; // interrupcao btn
+    PCMSK1 = 0x0E;
+
+    TCCR1A = 0x00; // modo ctc
+    TCCR1B = 0x0A; // prescaler de 8
     TCNT1 = 0;
-    TIMSK1 = (1 << OCIE1A);    // Habilita interrupção de comparação A
-    OCR1A = 10000;             // Aprox. 10Hz para atualização do LCD (16MHz/8/10000)
-    
-    sei();                     // Habilita interrupções globais
+    TIMSK1 = (1 << OCIE1A); // HABILITA INTERRUPCAO COM COMPARADOR COM A
+    OCR1A = 600;            // 600 - PROXIMO DE 100HZ, 30000 É 33 hz, 1000 É 1000hz
+    sei();
 }
 
-void mde(uint16_t *freq_portadora, uint16_t msg, volatile uint8_t *sinal_modulado)
+void mde(volatile uint16_t msg, volatile uint8_t *sinal_modulado)
 {
-    static char freq_string[4] = {0}; 
-    static char sinal_string[4] = {0}; 
-    static uint8_t estado_anterior = 255; // para detectar mudança de estado
-
-    // Limpa display apenas na mudança de estado
-    if (estado_mde != estado_anterior) {
-        cmd_LCD(0x01, 0);              // limpa o display
-        estado_anterior = estado_mde;
-    }
+    static char freq_string[4] = {0};
+    static char sinal_string[4] = {0};
+    static uint8_t freq_portadora = 100; // frequencia da portadora inicial
 
     switch (estado_mde)
     {
     case ESTADO0:
-        cmd_LCD(0x80, 0);              // desloca cursor para a primeira linha
+        cmd_LCD(0x80, 0);           // desloca cursor para a primeira linha
         escreve_LCD("Mod: AM  F:"); // string armazenada na RAM
 
-        *freq_portadora += inc_dec; // incrementa ou decrementa a frequencia da portadora
-        if (*freq_portadora < 50) *freq_portadora = 50;   // limite mínimo
-        if (*freq_portadora > 999) *freq_portadora = 999; // limite máximo
-        
-        ident_num(*freq_portadora, freq_string, 3); // converte o contador para string
-        escreve_LCD(freq_string);            // escreve o contador no LCD
+        freq_portadora += inc_dec;                 // incrementa ou decrementa a frequencia da portadora
+        ident_num(freq_portadora, freq_string, 3); // converte o contador para string
+        escreve_LCD(freq_string);                  // escreve o contador no LCD
 
         cmd_LCD(0x8E, 0);
         escreve_LCD("Hz");
-        cmd_LCD(0xC0, 0);              // desloca cursor para a segunda linha
+        cmd_LCD(0xC0, 0); // desloca cursor para a segunda linha
         escreve_LCD("Msg: ");
 
-        ident_num(msg, sinal_string, 3); // mostra o valor da mensagem
-        escreve_LCD(sinal_string);            // escreve no LCD
+        ident_num(*sinal_modulado, sinal_string, 3); // converte o contador para string
+        escreve_LCD(sinal_string);                   // escreve o contador no LCD
         break;
     case ESTADO1:
-        cmd_LCD(0x80, 0);              // desloca cursor para a primeira linha
+        cmd_LCD(0x80, 0);            // desloca cursor para a primeira linha
         escreve_LCD("Mod: FM  F: "); // string armazenada na RAM
 
-        *freq_portadora += inc_dec; // incrementa ou decrementa a frequencia da portadora
-        if (*freq_portadora < 50) *freq_portadora = 50;   // limite mínimo
-        if (*freq_portadora > 999) *freq_portadora = 999; // limite máximo
-        
-        ident_num(*freq_portadora, freq_string, 3); // converte o contador para string
-        escreve_LCD(freq_string);            // escreve o contador no LCD
+        freq_portadora += inc_dec;                 // incrementa ou decrementa a frequencia da portadora
+        ident_num(freq_portadora, freq_string, 3); // converte o contador para string
+        escreve_LCD(freq_string);                  // escreve o contador no LCD
 
         cmd_LCD(0x8E, 0);
         escreve_LCD("Hz");
-        cmd_LCD(0xC0, 0);              // desloca cursor para a segunda linha
+        cmd_LCD(0xC0, 0); // desloca cursor para a segunda linha
         escreve_LCD("Msg: ");
 
-        ident_num(msg, sinal_string, 3); // mostra o valor da mensagem
-        escreve_LCD(sinal_string);            // escreve no LCD
+        ident_num(*sinal_modulado, sinal_string, 3); // converte o contador para string
+        escreve_LCD(sinal_string);                   // escreve o contador no LCD
         break;
     case ESTADO2:
-        cmd_LCD(0x80, 0);              // desloca cursor para a primeira linha
+        cmd_LCD(0x80, 0);           // desloca cursor para a primeira linha
         escreve_LCD("Mod: ASK T:"); // string armazenada na RAM
 
-        *freq_portadora += inc_dec; // incrementa ou decrementa a frequencia da portadora
-        if (*freq_portadora < 50) *freq_portadora = 50;   // limite mínimo
-        if (*freq_portadora > 999) *freq_portadora = 999; // limite máximo
-        
-        ident_num(*freq_portadora, freq_string, 3); // converte o contador para string
-        escreve_LCD(freq_string);            // escreve o contador no LCD
+        freq_portadora += inc_dec;                 // incrementa ou decrementa a frequencia da portadora
+        ident_num(freq_portadora, freq_string, 3); // converte o contador para string
+        escreve_LCD(freq_string);                  // escreve o contador no LCD
 
         cmd_LCD(0x8E, 0);
         escreve_LCD("bs");
-        cmd_LCD(0xC0, 0);              // desloca cursor para a segunda linha
+        cmd_LCD(0xC0, 0); // desloca cursor para a segunda linha
         escreve_LCD("Msg: ");
 
-        ident_num(msg, sinal_string, 3); // mostra o valor da mensagem
-        escreve_LCD(sinal_string);            // escreve no LCD
+        ident_num(*sinal_modulado, sinal_string, 3); // converte o contador para string
+        escreve_LCD(sinal_string);                   // escreve o contador no LCD
         break;
     case ESTADO3:
-        cmd_LCD(0x80, 0);              // desloca cursor para a primeira linha
+        cmd_LCD(0x80, 0);           // desloca cursor para a primeira linha
         escreve_LCD("Mod: FSK T:"); // string armazenada na RAM
 
-        *freq_portadora += inc_dec; // incrementa ou decrementa a frequencia da portadora
-        if (*freq_portadora < 50) *freq_portadora = 50;   // limite mínimo
-        if (*freq_portadora > 999) *freq_portadora = 999; // limite máximo
-        
-        ident_num(*freq_portadora, freq_string, 3); // converte o contador para string
-        escreve_LCD(freq_string);            // escreve o contador no LCD
+        freq_portadora += inc_dec;                 // incrementa ou decrementa a frequencia da portadora
+        ident_num(freq_portadora, freq_string, 3); // converte o contador para string
+        escreve_LCD(freq_string);                  // escreve o contador no LCD
 
         cmd_LCD(0x8E, 0);
         escreve_LCD("bs");
-        cmd_LCD(0xC0, 0);              // desloca cursor para a segunda linha
+        cmd_LCD(0xC0, 0); // desloca cursor para a segunda linha
         escreve_LCD("Msg: ");
 
-        ident_num(msg, sinal_string, 3); // mostra o valor da mensagem
-        escreve_LCD(sinal_string);            // escreve no LCD
+        ident_num(*sinal_modulado, sinal_string, 3); // converte o contador para string
+        escreve_LCD(sinal_string);                   // escreve o contador no LCD
         break;
     default:
         break;
     }
-    
-    inc_dec = 0; // reseta o incremento/decremento após usar
 }
 
 ISR(PCINT1_vect)
 {
-    _delay_ms(50); // debounce
-    
-    uint8_t botoes = PINC & 0x0E; // lê apenas os bits dos botões
-    
-    if (~botoes & (1 << PC1)) // S1 pressionado (-), lógica invertida devido ao pull-up
+    if (PINC == 0x06)
     {
-        inc_dec = -1;
-    }
-    else if (~botoes & (1 << PC2)) // S2 pressionado (+)
-    {
-        inc_dec = 1;
-    }
-    else if (~botoes & (1 << PC3)) // S3 pressionado (M)
-    {
+        //	S3 pressionado (M)
         estado_mde++;
         if (estado_mde > ESTADO3)
         {
             estado_mde = ESTADO0; // volta ao estado inicial
         }
     }
+    else if (PINC == 0x0A)
+    {
+        // S2 pressionado (+)
+        inc_dec = 1; // seta incremento
+    }
+    else if (PINC == 0x0C)
+    {
+        // S1 pressionado (-)
+        inc_dec = -1;
+    }
+    else
+    {
+        inc_dec = 0; // limpa o incremento/decremento
+    }
 }
 
 ISR(TIMER1_COMPA_vect)
 {
-    // Sinaliza para atualizar o LCD
-    flag_update_lcd = 1;
+    
+    sinal_modulado = modula_am(msg, cont); // modula FM
+    // switch (estado_mde)
+    // {
+    // case ESTADO0:
+    //     sinal_modulado = modula_am(msg, cont); // modula FM
+    //     break;
+    // case ESTADO1:
+    //     sinal_modulado = modula_fm(msg, cont); // modula FM
+    //     break;
+    // case ESTADO2:
+    //     sinal_modulado = modula_ask(msg & 0x01, cont); // modula ASK
+    //     break;
+    // case ESTADO3:
+    //     sinal_modulado = modula_fsk(msg & 0x01, cont); // modula FSK
+    //     break;
+    // default:
+    //     break;
+    // }
+
+    cont++;
+    if (cont >= 31)
+    {
+        cont = 0;
+        cont_aux++;
+        msg = msg >> 1; // desloca a mensagem para a direita, para pegar o proximo bit
+    }
+
     TCNT1 = 0; // reseta o contador do timer
 }

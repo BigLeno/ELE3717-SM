@@ -4,6 +4,6 @@
 #include <avr/io.h>
 
 void ADC_init(void);
-void ler_adc(uint16_t *adc_value);
+uint16_t ler_adc();
 
 #endif

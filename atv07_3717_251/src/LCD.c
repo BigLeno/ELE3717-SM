@@ -77,22 +77,17 @@ void escreve_LCD(char *c)
 void ident_num(unsigned int valor, char *disp, unsigned int qtd_digit)
 {
     uint8_t n;
-    qtd_digit++; // incrementa para incluir o terminador
+    qtd_digit++;
 
     for(n=0; n<qtd_digit; n++) {
         disp[n] = ' '; //limpa vetor para armazenagem dos digitos
     }
     disp[qtd_digit-1] = '\0';     //coloca o terminador de string
     n = qtd_digit-2;
-    
-    if (valor == 0) {
-        disp[n] = '0'; // caso especial para zero
-        return;
-    }
-    
     do
     {
         disp[n--] = (valor%10) + conv_ascii; //pega o resto da divisão por 10
         valor /=10; //pega o inteiro da divisão por 10
-    } while (valor!=0 && n >= 0);
+    } while (valor!=0);
+
 } 
