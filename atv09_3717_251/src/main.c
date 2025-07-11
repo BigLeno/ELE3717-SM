@@ -85,30 +85,52 @@ static void vtask_mpu6050(void *pvParameters)
 		USART_send_int(sample_count);
 		USART_send_string(" ---\r\n");
 		
-		// Dados do acelerômetro com rótulos
-		USART_send_string("Acelerometro (raw):\r\n");
+		// Dados do acelerômetro
+		USART_send_string("Acelerometro:\r\n");
 		USART_send_string("  X: ");
 		USART_send_int(mpu_data.accel_x);
+		USART_send_string(" raw (");
+		USART_send_int(mpu_data.accel_x / 16384); // Conversão aproximada para g
+		USART_send_string("g)\r\n");
+		
 		USART_send_string("  Y: ");
 		USART_send_int(mpu_data.accel_y);
+		USART_send_string(" raw (");
+		USART_send_int(mpu_data.accel_y / 16384);
+		USART_send_string("g)\r\n");
+		
 		USART_send_string("  Z: ");
 		USART_send_int(mpu_data.accel_z);
-		USART_send_string("\r\n");
+		USART_send_string(" raw (");
+		USART_send_int(mpu_data.accel_z / 16384);
+		USART_send_string("g)\r\n");
 		
-		// Dados do giroscópio com rótulos
-		USART_send_string("Giroscopio (raw):\r\n");
+		// Dados do giroscópio
+		USART_send_string("Giroscopio:\r\n");
 		USART_send_string("  X: ");
 		USART_send_int(mpu_data.gyro_x);
+		USART_send_string(" raw (");
+		USART_send_int(mpu_data.gyro_x / 131); // Conversão aproximada para °/s
+		USART_send_string(" deg/s)\r\n");
+		
 		USART_send_string("  Y: ");
 		USART_send_int(mpu_data.gyro_y);
+		USART_send_string(" raw (");
+		USART_send_int(mpu_data.gyro_y / 131);
+		USART_send_string(" deg/s)\r\n");
+		
 		USART_send_string("  Z: ");
 		USART_send_int(mpu_data.gyro_z);
-		USART_send_string("\r\n");
+		USART_send_string(" raw (");
+		USART_send_int(mpu_data.gyro_z / 131);
+		USART_send_string(" deg/s)\r\n");
 		
-		// Temperatura
-		USART_send_string("Temperatura (raw): ");
+		// Temperatura com conversão
+		USART_send_string("Temperatura: ");
 		USART_send_int(mpu_data.temp);
-		USART_send_string("\r\n");
+		USART_send_string(" raw (");
+		USART_send_int((mpu_data.temp / 340) + 37); // Conversão aproximada para °C
+		USART_send_string(" °C)\r\n");
 		
 		// Separador
 		USART_send_string("\r\n");
