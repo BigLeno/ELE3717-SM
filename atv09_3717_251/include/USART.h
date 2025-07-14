@@ -21,4 +21,7 @@ void USART_send_string(const char* str);
 // Envia um número inteiro como texto
 void USART_send_int(int value);
 
+// Envia um número float como texto
+void USART_send_float(float value, uint8_t decimals);
+
 #endif
