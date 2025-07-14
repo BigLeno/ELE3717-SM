@@ -19,7 +19,9 @@ SRC = $(wildcard $(SRC_DIR)/*.c)
 LIB_SRC = $(LIB_DIR)/freertos/src/tasks.c \
           $(LIB_DIR)/freertos/src/list.c \
           $(LIB_DIR)/freertos/src/port.c \
-          $(LIB_DIR)/freertos/src/heap_3.c
+          $(LIB_DIR)/freertos/src/heap_3.c \
+          $(LIB_DIR)/freertos/src/timers.c \
+          $(LIB_DIR)/freertos/src/queue.c
 ALL_SRC = $(SRC) $(LIB_SRC)
 OBJ = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC)) \
       $(patsubst $(LIB_DIR)/freertos/src/%.c,$(BUILD_DIR)/%.o,$(LIB_SRC))
