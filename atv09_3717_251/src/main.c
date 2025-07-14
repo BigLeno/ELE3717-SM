@@ -42,20 +42,16 @@ int16_t fast_atan2_degrees(int16_t y, int16_t z) {
 }
 
 void setup(void);
-static void vtask_led(void *pvParameters);
 static void vtask_mpu6050(void *pvParameters);
 
 int main(void)
 {
 	setup();
 
-	USART_send_string("DEBUG: Criando tasks...\r\n");
+	USART_send_string("DEBUG: Criando task MPU6050...\r\n");
 	
-	// Reduzir stack size para economizar RAM
-	xTaskCreate(vtask_led, (const char *)"led", 128, NULL, 1, NULL);
-	USART_send_string("DEBUG: Task LED criada!\r\n");
-	
-	xTaskCreate(vtask_mpu6050, (const char *)"mpu6050", 256, NULL, 2, NULL);
+	// Apenas uma task para economizar RAM
+	xTaskCreate(vtask_mpu6050, (const char *)"mpu6050", 192, NULL, 1, NULL);
 	USART_send_string("DEBUG: Task MPU6050 criada!\r\n");
 	
 	USART_send_string("DEBUG: Iniciando scheduler...\r\n");
@@ -90,19 +86,11 @@ void setup() {
 	USART_send_string("DEBUG: MPU6050 inicializado!\r\n");
 }
 
-static void vtask_led(void *pvParameters)
-{
-	for (;;)
-	{
-		PORTB ^= (1 << PB5); 
-		vTaskDelay(pdMS_TO_TICKS(500));  // Delay de 500ms
-	}
-}
-
 static void vtask_mpu6050(void *pvParameters)
 {
 	mpu6050_data_t mpu_data;
 	uint32_t sample_count = 0;
+	uint8_t led_state = 0;
 	
 	// Debug: Task iniciada
 	USART_send_string("DEBUG: Task MPU6050 iniciada!\r\n");
@@ -131,6 +119,13 @@ static void vtask_mpu6050(void *pvParameters)
 	
 	for (;;)
 	{
+		// Controle do LED (pisca a cada leitura)
+		led_state = !led_state;
+		if (led_state) {
+			PORTB |= (1 << PB5);  // Liga LED
+		} else {
+			PORTB &= ~(1 << PB5); // Desliga LED
+		}
 		// Lê todos os dados do MPU6050
 		mpu6050_read_all(&mpu_data);
 		sample_count++;
