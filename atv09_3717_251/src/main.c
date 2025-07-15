@@ -133,80 +133,40 @@ static void vtask_mpu6050(void *pvParameters)
 		// Lê todos os dados do MPU6050
 		mpu6050_read_all(&mpu_data);
 		sample_count++;
-		
+
 		// Calcula ângulos usando tabela de lookup (sem math.h)
 		int16_t roll_tenths = fast_atan2_degrees(mpu_data.accel_y, mpu_data.accel_z);
 		int16_t pitch_tenths = fast_atan2_degrees(-mpu_data.accel_x, mpu_data.accel_z);
-		
-		// Cabeçalho da amostra
-		USART_send_string("--- Amostra #");
+
+		// Envia dados em formato CSV
+		// Formato: amostra,accel_x,accel_y,accel_z,gyro_x,gyro_y,gyro_z,roll,pitch,temp_raw,temp_celsius\r\n
 		USART_send_int(sample_count);
-		USART_send_string(" ---\r\n");
-		
-		// Dados do acelerômetro
-		USART_send_string("Acelerometro:\r\n");
-		USART_send_string("  X: ");
+		USART_send_string(",");
 		USART_send_int(mpu_data.accel_x);
-		USART_send_string(" raw (");
-		USART_send_int(mpu_data.accel_x / 16384); // Conversão aproximada para g
-		USART_send_string("g)\r\n");
-		
-		USART_send_string("  Y: ");
+		USART_send_string(",");
 		USART_send_int(mpu_data.accel_y);
-		USART_send_string(" raw (");
-		USART_send_int(mpu_data.accel_y / 16384);
-		USART_send_string("g)\r\n");
-		
-		USART_send_string("  Z: ");
+		USART_send_string(",");
 		USART_send_int(mpu_data.accel_z);
-		USART_send_string(" raw (");
-		USART_send_int(mpu_data.accel_z / 16384);
-		USART_send_string("g)\r\n");
-		
-		// Dados do giroscópio
-		USART_send_string("Giroscopio:\r\n");
-		USART_send_string("  X: ");
+		USART_send_string(",");
 		USART_send_int(mpu_data.gyro_x);
-		USART_send_string(" raw (");
-		USART_send_int(mpu_data.gyro_x / 131); // Conversão aproximada para °/s
-		USART_send_string(" deg/s)\r\n");
-		
-		USART_send_string("  Y: ");
+		USART_send_string(",");
 		USART_send_int(mpu_data.gyro_y);
-		USART_send_string(" raw (");
-		USART_send_int(mpu_data.gyro_y / 131);
-		USART_send_string(" deg/s)\r\n");
-		
-		USART_send_string("  Z: ");
+		USART_send_string(",");
 		USART_send_int(mpu_data.gyro_z);
-		USART_send_string(" raw (");
-		USART_send_int(mpu_data.gyro_z / 131);
-		USART_send_string(" deg/s)\r\n");
-		
-		// Ângulos calculados usando lookup table (sem math.h)
-		USART_send_string("Orientacao (lookup table):\r\n");
-		USART_send_string("  Roll:  ");
-		USART_send_int(roll_tenths / 10);  // Parte inteira
+		USART_send_string(",");
+		USART_send_int(roll_tenths / 10);
 		USART_send_string(".");
-		USART_send_int(abs(roll_tenths % 10)); // Uma casa decimal
-		USART_send_string("°\r\n");
-		
-		USART_send_string("  Pitch: ");
-		USART_send_int(pitch_tenths / 10);  // Parte inteira
+		USART_send_int(abs(roll_tenths % 10));
+		USART_send_string(",");
+		USART_send_int(pitch_tenths / 10);
 		USART_send_string(".");
-		USART_send_int(abs(pitch_tenths % 10)); // Uma casa decimal
-		USART_send_string("°\r\n");
-		
-		// Temperatura com conversão
-		USART_send_string("Temperatura: ");
+		USART_send_int(abs(pitch_tenths % 10));
+		USART_send_string(",");
 		USART_send_int(mpu_data.temp);
-		USART_send_string(" raw (");
-		USART_send_int((mpu_data.temp / 340) + 37); // Conversão aproximada para °C
-		USART_send_string(" °C)\r\n");
-		
-		// Separador
+		USART_send_string(",");
+		USART_send_int((mpu_data.temp / 340) + 37);
 		USART_send_string("\r\n");
-		
+
 		// Delay de 1 segundo entre leituras para melhor visualização
 		vTaskDelay(pdMS_TO_TICKS(1000));
 	}
