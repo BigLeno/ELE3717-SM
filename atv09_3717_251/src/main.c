@@ -8,37 +8,41 @@
 #include "mpu6050.h"
 #include "USART.h"
 
+// ATENÇÃO: O pino TX (PD0) está conectado ao módulo Bluetooth HC-05
+// Todos os dados enviados via USART serão transmitidos pelo Bluetooth
+// Não é necessário modificar o código de transmissão
+
 // Tabela de lookup para arctangente (atan) 
 // Índices: ratio * 10 (0 a 50, que corresponde a 0.0 a 5.0)
 // Valores: ângulo em graus * 10 (para preservar uma casa decimal)
 const int16_t atan_lookup[51] = {
-    0,    57,   114,  171,  228,  284,  340,  395,  449,  503,  // 0.0-0.9
-    557,  610,  662,  714,  765,  816,  866,  916,  965,  1013, // 1.0-1.9
-    1061, 1107, 1154, 1199, 1244, 1288, 1332, 1376, 1419, 1462, // 2.0-2.9
-    1504, 1546, 1588, 1629, 1670, 1711, 1751, 1791, 1831, 1871, // 3.0-3.9
-    1910, 1949, 1988, 2027, 2065, 2103, 2141, 2179, 2217, 2254, // 4.0-4.9
-    2291  // 5.0
+	0,    57,   114,  171,  228,  284,  340,  395,  449,  503,  // 0.0-0.9
+	557,  610,  662,  714,  765,  816,  866,  916,  965,  1013, // 1.0-1.9
+	1061, 1107, 1154, 1199, 1244, 1288, 1332, 1376, 1419, 1462, // 2.0-2.9
+	1504, 1546, 1588, 1629, 1670, 1711, 1751, 1791, 1831, 1871, // 3.0-3.9
+	1910, 1949, 1988, 2027, 2065, 2103, 2141, 2179, 2217, 2254, // 4.0-4.9
+	2291  // 5.0
 };
 
 // Função para calcular arctangente usando lookup table
 int16_t fast_atan2_degrees(int16_t y, int16_t z) {
-    if (z == 0) return (y > 0) ? 900 : -900; // ±90°
-    
-    // Calcula a razão absoluta
-    int32_t ratio_abs = (y >= 0 ? y : -y) * 10L;
-    int32_t z_abs = (z >= 0 ? z : -z);
-    ratio_abs = ratio_abs / z_abs;
-    
-    // Limita o índice da tabela
-    if (ratio_abs > 50) ratio_abs = 50;
-    
-    int16_t angle = atan_lookup[ratio_abs];
-    
-    // Ajusta o sinal baseado nos quadrantes
-    if (z < 0) angle = 1800 - angle; // 180° - angle
-    if (y < 0) angle = -angle;
-    
-    return angle; // Retorna em décimos de grau
+	if (z == 0) return (y > 0) ? 900 : -900; // ±90°
+	
+	// Calcula a razão absoluta
+	int32_t ratio_abs = (y >= 0 ? y : -y) * 10L;
+	int32_t z_abs = (z >= 0 ? z : -z);
+	ratio_abs = ratio_abs / z_abs;
+	
+	// Limita o índice da tabela
+	if (ratio_abs > 50) ratio_abs = 50;
+	
+	int16_t angle = atan_lookup[ratio_abs];
+	
+	// Ajusta o sinal baseado nos quadrantes
+	if (z < 0) angle = 1800 - angle; // 180° - angle
+	if (y < 0) angle = -angle;
+	
+	return angle; // Retorna em décimos de grau
 }
 
 void setup(void);
