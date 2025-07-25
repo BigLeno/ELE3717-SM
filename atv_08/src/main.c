@@ -178,57 +178,53 @@ void lcd_print_num(uint8_t val)
 
 //**INTERRUP��O PARA GERA��O DOS SINAIS
 ISR(TIMER1_COMPA_vect){
- if(saida_ligada==true){
-	switch(onda_selecionada){
-		case  Quadrada:
-		 if (valor_comp_dc >= idx_tabela)
-		 {
-			 PORTB = (0xFF >> 2);
-			 PORTC = (0xFF & 0x03 << 4);
-		 }
-		 else {
-			 PORTB = (0x00 >> 2);
-			 PORTC = (0x00 & 0x03 << 4);
-		 }
-		break;
-		case Triangular:
-		if (idx_tabela <= valor_comp_dc)
-		{
-			vout_tri = vout_tri + (255./(valor_comp_dc+1));
-			PORTB = (vout_tri >> 2);
-			PORTC = (vout_tri & 0x03 << 4);
+	if(saida_ligada==true){
+		uint16_t saida = 0;
+		switch(onda_selecionada){
+			case Quadrada:
+				if (valor_comp_dc >= idx_tabela) {
+					saida = 255;
+				} else {
+					saida = 0;
+				}
+				break;
+			case Triangular:
+				if (idx_tabela <= valor_comp_dc) {
+					vout_tri = vout_tri + (255./(valor_comp_dc+1));
+				} else {
+					vout_tri = vout_tri - (255./(33-valor_comp_dc));
+				}
+				saida = vout_tri;
+				break;
+			case Rampa:
+				vout_rampa = vout_rampa+passo_rampa;
+				saida = vout_rampa;
+				break;
+			case Senoide:
+				saida = onda_seno[idx_tabela];
+				break;
+			case Total_ondas:
+				saida = 128;
+				break;
 		}
-		else {
-			vout_tri = vout_tri - (255./(33-valor_comp_dc));
-			PORTB = (vout_tri >> 2);
-			PORTC = (vout_tri & 0x03 << 4);
+		// Aplica amplitude e offset
+		// saida_final = (saida * amp_vpp) / 255 + offset_v - 128
+		// O offset_v é centrado em 128 (meio da escala)
+		int16_t saida_final = ((int16_t)saida - 128) * amp_vpp / 255 + offset_v;
+		// Limita entre 0 e 255
+		if (saida_final < 0) saida_final = 0;
+		if (saida_final > 255) saida_final = 255;
+		PORTB = (saida_final >> 2);
+		PORTC = (saida_final & 0x03) << 4;
+		idx_tabela++;
+		if (idx_tabela>31) {
+			idx_tabela = 0;
+			vout_tri = 0;
 		}
-		break;
-		case Rampa:
-		vout_rampa = vout_rampa+passo_rampa;
-		 PORTB = (vout_rampa >> 2);
-		 PORTC = (vout_rampa & 0x03 << 4);
-		break;
-		case Senoide:
-		PORTB = (onda_seno[idx_tabela]  >> 2);
-		PORTC = (onda_seno[idx_tabela] & 0x03) << 4;
-		break;
-		case Total_ondas:
-		// Não faz nada, apenas para evitar warning
-		break;
+	} else {
+		PORTB = (128  >> 2);
+		PORTC = (128 & 0x03) << 4;
 	}
-	
-	idx_tabela++;
-	if (idx_tabela>31)
-	{
-		idx_tabela = 0;
-		vout_tri = 0;
-	}
- }
- else {
-	 PORTB = (128  >> 2);
-	 PORTC = (128 & 0x03) << 4;
- }
 }
 
 
