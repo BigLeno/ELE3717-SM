@@ -16,12 +16,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "lcd.h"
+#include "btn.h"
 
-//***DEFINI��ES DE PINOS PARA BOT�ES (conectados a PORTC)***//
-#define BTN_DOWN    PINC0   // Liga/desliga sa�da
-#define BTN_M    PINC1   // Muda tipo de onda
-#define BTN_UP PINC2   // Diminui frequ�ncia
-#define BTN_A   PINC3   // Aumenta frequ�ncia
+
 
 //**ENUMERA��O DAS ONDAS**//
 typedef enum {Quadrada, Triangular, Rampa, Senoide, Total_ondas} TipoOnda;
@@ -219,41 +216,7 @@ ISR(TIMER1_COMPA_vect){
  }
 }
 
-//**INTERRUP��O DE ACIONAMENTO DOS BOT�ES**//
-ISR(PCINT1_vect){
-	
-	if(!(PINC & (1<<BTN_A))) {
-		saida_ligada = !saida_ligada;
-	}
-	
-	if(!(PINC & (1<<BTN_M))){
-		contador++;
-		switch(contador){
-			case 0: 
-			onda_selecionada = Quadrada;
-			break;
-			
-			case 1:
-			onda_selecionada = Triangular;
-			break;
-			
-			case 2:
-			onda_selecionada = Rampa;
-			break;
-			
-			case 3:
-			onda_selecionada = Senoide;
-			break;
-			
-			default:
-			contador = -1;
-			break;
-		}
-	}
-	
-	taskYIELD();
-	
-}
+
 
 //**TASK DE CONTROLE DO LCD**//
 void vTaskLCD (void *pv){
@@ -273,7 +236,7 @@ inic_LCD_4bits();
 
 int main(void)
 {
-	buttons_init();
+	btn_init();
 
 	PCICR = (1 << PCIE1);
 	PCMSK1 = 0x0F;
