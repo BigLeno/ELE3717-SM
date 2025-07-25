@@ -299,7 +299,7 @@ int main(void)
 	// xTaskCreate retorna BaseType_t, pode ser ignorado se não for usado
 	// Task para ajuste de parâmetros
 	(void)xTaskCreate(vTaskLCD, "LCD", 128, NULL, 1, NULL);
-	(void)xTaskCreate(vTaskParametros, "PARAM", 128, NULL, 2, NULL);
+	(void)xTaskCreate(vTaskParametros, "PARAM", 256, NULL, 2, NULL);
 	vTaskStartScheduler();
 
 	// O loop abaixo nunca será alcançado, mas evita warning de função sem retorno
