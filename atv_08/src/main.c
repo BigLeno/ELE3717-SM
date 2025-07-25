@@ -262,16 +262,15 @@ void vTaskLCD (void *pv){
 		char l2[17] = "";
 		switch(parametro) {
 			case 0:
-				snprintf(l2, 17, "*%3uHz %1.1fV %1.1fV", freq_hz, amp_v, off_v);
+				snprintf(l2, 17, "%3uHz* %1.1fV %1.1fV", freq_hz, amp_v, off_v);
 				break;
 			case 1:
-				snprintf(l2, 17, "%3uHz*%1.1fV %1.1fV", freq_hz, amp_v, off_v);
+				snprintf(l2, 17, "%3uHz %1.1fV* %1.1fV", freq_hz, amp_v, off_v);
 				break;
 			case 2:
-				snprintf(l2, 17, "%3uHz %1.1fV*%1.1fV", freq_hz, amp_v, off_v);
+				snprintf(l2, 17, "%3uHz %1.1fV %1.1fV*", freq_hz, amp_v, off_v);
 				break;
 			case 3:
-				// duty não aparece na linha 2, mas pode marcar o final
 				snprintf(l2, 17, "%3uHz %1.1fV %1.1fV*", freq_hz, amp_v, off_v);
 				break;
 			default:
@@ -350,6 +349,11 @@ void vTaskParametros(void *pv) {
 				case 2: if (offset_v < 250) offset_v += 5; break;
 				case 3: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
 			}
+			// Saturação após incremento
+			if (amp_vpp > 255) amp_vpp = 255;
+			if (amp_vpp < 0) amp_vpp = 0;
+			if (offset_v > 255) offset_v = 255;
+			if (offset_v < 0) offset_v = 0;
 		}
 		// Se botão UP está sendo segurado
 		if (up_held && btn_read(BTN_S2)) { // BTN_S2 agora é UP
@@ -364,6 +368,11 @@ void vTaskParametros(void *pv) {
 					case 2: if (offset_v < 250) offset_v += 5; break;
 					case 3: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
 				}
+				// Saturação após incremento
+				if (amp_vpp > 255) amp_vpp = 255;
+				if (amp_vpp < 0) amp_vpp = 0;
+				if (offset_v > 255) offset_v = 255;
+				if (offset_v < 0) offset_v = 0;
 			}
 		} else {
 			up_held = 0;
@@ -382,6 +391,11 @@ void vTaskParametros(void *pv) {
 				case 2: if (offset_v >= 5) offset_v -= 5; break;
 				case 3: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
 			}
+			// Saturação após decremento
+			if (amp_vpp > 255) amp_vpp = 255;
+			if (amp_vpp < 0) amp_vpp = 0;
+			if (offset_v > 255) offset_v = 255;
+			if (offset_v < 0) offset_v = 0;
 		}
 		// Se botão DOWN está sendo segurado
 		if (down_held && btn_read(BTN_S0)) { // BTN_S0 agora é DOWN
@@ -396,6 +410,11 @@ void vTaskParametros(void *pv) {
 					case 2: if (offset_v >= 5) offset_v -= 5; break;
 					case 3: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
 				}
+				// Saturação após decremento
+				if (amp_vpp > 255) amp_vpp = 255;
+				if (amp_vpp < 0) amp_vpp = 0;
+				if (offset_v > 255) offset_v = 255;
+				if (offset_v < 0) offset_v = 0;
 			}
 		} else {
 			down_held = 0;
