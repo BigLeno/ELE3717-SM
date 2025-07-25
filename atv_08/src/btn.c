@@ -23,32 +23,32 @@ static uint8_t last_state_s2 = 1;
 static uint8_t last_state_s3 = 1;
 
 ISR(PCINT1_vect) {
-    // S0: PC0 (A)
+    // S0: PC0 (agora faz o que S2 fazia: DOWN)
     static uint8_t last_state_s0 = 1;
     uint8_t curr_s0 = (PINC & (1 << BTN_S0)) ? 1 : 0;
     if (last_state_s0 && !curr_s0) {
-        btn_a_flag = 1;
+        btn_down_flag = 1;
     }
     last_state_s0 = curr_s0;
 
-    // S1: PC1 (UP)
+    // S1: PC1 (agora faz o que S3 fazia: M)
     uint8_t curr_s1 = (PINC & (1 << BTN_S1)) ? 1 : 0;
     if (last_state_s1 && !curr_s1) {
-        btn_up_flag = 1;
+        btn_m_flag = 1;
     }
     last_state_s1 = curr_s1;
 
-    // S2: PC2 (DOWN)
+    // S2: PC2 (agora faz o que S1 fazia: UP)
     uint8_t curr_s2 = (PINC & (1 << BTN_S2)) ? 1 : 0;
     if (last_state_s2 && !curr_s2) {
-        btn_down_flag = 1;
+        btn_up_flag = 1;
     }
     last_state_s2 = curr_s2;
 
-    // S3: PC3 (M)
+    // S3: PC3 (agora faz o que S0 fazia: A)
     uint8_t curr_s3 = (PINC & (1 << BTN_S3)) ? 1 : 0;
     if (last_state_s3 && !curr_s3) {
-        btn_m_flag = 1;
+        btn_a_flag = 1;
     }
     last_state_s3 = curr_s3;
 }
