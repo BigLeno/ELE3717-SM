@@ -3,10 +3,19 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-// Flags globais dos botões
+#ifndef BTN_S0
+#define BTN_S0 0 // PC0
+#endif
+
+// Flags globais dos botões (hardware)
 volatile uint8_t flag_btn_s1 = 0;
 volatile uint8_t flag_btn_s2 = 0;
 volatile uint8_t flag_btn_s3 = 0;
+// Flags globais para integração com main.c
+volatile uint8_t btn_m_flag = 0;
+volatile uint8_t btn_up_flag = 0;
+volatile uint8_t btn_down_flag = 0;
+volatile uint8_t btn_a_flag = 0;
 
 // Debounce robusto: só seta a flag se o botão estava solto antes e agora está pressionado
 static uint8_t last_state_s1 = 1;
@@ -14,24 +23,32 @@ static uint8_t last_state_s2 = 1;
 static uint8_t last_state_s3 = 1;
 
 ISR(PCINT1_vect) {
-    // S1: PC1
+    // S0: PC0 (A)
+    static uint8_t last_state_s0 = 1;
+    uint8_t curr_s0 = (PINC & (1 << BTN_S0)) ? 1 : 0;
+    if (last_state_s0 && !curr_s0) {
+        btn_a_flag = 1;
+    }
+    last_state_s0 = curr_s0;
+
+    // S1: PC1 (UP)
     uint8_t curr_s1 = (PINC & (1 << BTN_S1)) ? 1 : 0;
     if (last_state_s1 && !curr_s1) {
-        flag_btn_s1 = 1;
+        btn_up_flag = 1;
     }
     last_state_s1 = curr_s1;
 
-    // S2: PC2
+    // S2: PC2 (DOWN)
     uint8_t curr_s2 = (PINC & (1 << BTN_S2)) ? 1 : 0;
     if (last_state_s2 && !curr_s2) {
-        flag_btn_s2 = 1;
+        btn_down_flag = 1;
     }
     last_state_s2 = curr_s2;
 
-    // S3: PC3
+    // S3: PC3 (M)
     uint8_t curr_s3 = (PINC & (1 << BTN_S3)) ? 1 : 0;
     if (last_state_s3 && !curr_s3) {
-        flag_btn_s3 = 1;
+        btn_m_flag = 1;
     }
     last_state_s3 = curr_s3;
 }

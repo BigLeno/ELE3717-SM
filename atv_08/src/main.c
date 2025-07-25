@@ -17,6 +17,14 @@
 #include <stdio.h>
 #include "lcd.h"
 #include "btn.h"
+// Protótipo da task de ajuste de parâmetros
+void vTaskParametros(void *pv);
+
+// Flags globais dos botões (declaradas em btn.c)
+extern volatile uint8_t btn_m_flag;
+extern volatile uint8_t btn_up_flag;
+extern volatile uint8_t btn_down_flag;
+extern volatile uint8_t btn_a_flag;
 
 
 
@@ -279,10 +287,72 @@ int main(void)
 	inic_LCD_4bits();
 
 	// xTaskCreate retorna BaseType_t, pode ser ignorado se não for usado
+	// Task para ajuste de parâmetros
 	(void)xTaskCreate(vTaskLCD, "LCD", 128, NULL, 1, NULL);
+	(void)xTaskCreate(vTaskParametros, "PARAM", 128, NULL, 2, NULL);
 	vTaskStartScheduler();
 
 	// O loop abaixo nunca será alcançado, mas evita warning de função sem retorno
 	for(;;) {}
+
+}
+
+//**TASK DE AJUSTE DE PARÂMETROS**//
+void vTaskParametros(void *pv) {
+	// Parâmetro selecionado: 0=freq, 1=amp, 2=offset, 3=duty
+	uint8_t parametro = 0;
+	while(1) {
+		// Botão M: troca parâmetro
+		if (btn_m_flag) {
+			btn_m_flag = 0;
+			parametro = (parametro + 1) % 4;
+		}
+		// Botão ▲: incrementa
+		if (btn_up_flag) {
+			btn_up_flag = 0;
+			switch(parametro) {
+				case 0: // freq (1-100Hz, passo 1Hz)
+					if (freq_hz < 100) freq_hz++;
+					break;
+				case 1: // amp (0,0-5,0V, passo 0,1V)
+					if (amp_vpp < 250) amp_vpp += 5;
+					break;
+				case 2: // offset (0,0-5,0V, passo 0,1V)
+					if (offset_v < 250) offset_v += 5;
+					break;
+				case 3: // duty (1-99%)
+					if (duty_cycle < 99) duty_cycle++;
+					valor_comp_dc = ajuste_dc(duty_cycle);
+					break;
+			}
+		}
+		// Botão ▼: decrementa
+		if (btn_down_flag) {
+			btn_down_flag = 0;
+			switch(parametro) {
+				case 0: // freq
+					if (freq_hz > 1) freq_hz--;
+					break;
+				case 1: // amp
+					if (amp_vpp >= 5) amp_vpp -= 5;
+					break;
+				case 2: // offset
+					if (offset_v >= 5) offset_v -= 5;
+					break;
+				case 3: // duty
+					if (duty_cycle > 1) duty_cycle--;
+					valor_comp_dc = ajuste_dc(duty_cycle);
+					break;
+			}
+		}
+		// Botão A: liga/desliga saída
+		if (btn_a_flag) {
+			btn_a_flag = 0;
+			saida_ligada = !saida_ligada;
+		}
+		// Atualiza OCR1A se freq mudou
+		OCR1A = ajuste_freq(freq_hz);
+		vTaskDelay(pdMS_TO_TICKS(50));
+	}
 }
 
