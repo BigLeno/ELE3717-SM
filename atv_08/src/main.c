@@ -256,31 +256,15 @@ void vTaskLCD (void *pv){
 			snprintf(linha1, 17, "T:%-3s        %3s", onda_str, saida_ligada ? "ON" : "OFF");
 		}
 
-		// Linha 2: freq, amp, offset, com marcador de seleção
 		float amp_v = (amp_vpp * 5.0) / 255.0;
 		float off_v = (offset_v * 5.0) / 255.0;
 		char l2[17] = "";
-		switch(parametro) {
-			case 0:
-				snprintf(l2, 17, "%3uHz* %1.1fV %1.1fV", freq_hz, amp_v, off_v);
-				break;
-			case 1:
-				snprintf(l2, 17, "%3uHz %1.1fV* %1.1fV", freq_hz, amp_v, off_v);
-				break;
-			case 2:
-				snprintf(l2, 17, "%3uHz %1.1fV %1.1fV*", freq_hz, amp_v, off_v);
-				break;
-			case 3:
-				snprintf(l2, 17, "%3uHz %1.1fV %1.1fV*", freq_hz, amp_v, off_v);
-				break;
-			default:
-				snprintf(l2, 17, "%3uHz %1.1fV %1.1fV", freq_hz, amp_v, off_v);
-		}
+		snprintf(l2, 17, "%3uHz %1.1fV %1.1fV", freq_hz, amp_v, off_v);
 		lcd_goto(0, 0);
 		escreve_LCD(linha1);
 		lcd_goto(1, 0);
 		escreve_LCD(l2);
-		vTaskDelay(pdMS_TO_TICKS(500));
+		vTaskDelay(pdMS_TO_TICKS(400));
 	}
 }
 
