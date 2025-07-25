@@ -15,6 +15,7 @@
 #include "semphr.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include "lcd.h"
 
 //***DEFINI��ES DE PINOS PARA BOT�ES (conectados a PORTC)***//
 #define BTN_DOWN    PINC0   // Liga/desliga sa�da
@@ -143,17 +144,6 @@ void inic_LCD_4bits(void) {
 }
 
 
-void lcd_clear(void)
-{
-	cmd_LCD(0x01, 0);
-	_delay_ms(2);
-}
-
-void lcd_goto(uint8_t linha, uint8_t coluna)
-{
-	uint8_t addr = coluna + (linha ? 0x40 : 0x00);
-	cmd_LCD(0x80 | addr, 0);
-}
 
 // Escreve string at� o terminador null
 void escreve_LCD(char *str) {
