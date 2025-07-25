@@ -237,7 +237,7 @@ ISR(TIMER1_COMPA_vect){
 void vTaskLCD (void *pv){
 	// extern uint8_t parametro; // Não é necessário aqui
 	inic_LCD_4bits();
-	char linha1[17];
+	char linha1[17] = {0};
 	while(1)
 	{
 		// lcd_clear(); // Removido para evitar travamento e sobrecarga do LCD
@@ -298,7 +298,7 @@ int main(void)
 
 	// xTaskCreate retorna BaseType_t, pode ser ignorado se não for usado
 	// Task para ajuste de parâmetros
-	(void)xTaskCreate(vTaskLCD, "LCD", 128, NULL, 1, NULL);
+	(void)xTaskCreate(vTaskLCD, "LCD", 256, NULL, 1, NULL);
 	(void)xTaskCreate(vTaskParametros, "PARAM", 256, NULL, 2, NULL);
 	vTaskStartScheduler();
 
@@ -312,6 +312,11 @@ int main(void)
 // Parâmetro selecionado: 0=freq, 1=amp, 2=offset, 3=duty
 uint8_t parametro = 0;
 void vTaskParametros(void *pv) {
+	// Garante limites seguros na inicialização
+	if (freq_hz < 1 || freq_hz > 100) freq_hz = 10;
+	if (amp_vpp > 255) amp_vpp = 255;
+	if (offset_v > 255) offset_v = 128;
+	if (duty_cycle > 99) duty_cycle = 50;
 	TickType_t last_up_press = 0, last_down_press = 0;
 	TickType_t up_press_time = 0, down_press_time = 0;
 	uint8_t up_held = 0, down_held = 0;
