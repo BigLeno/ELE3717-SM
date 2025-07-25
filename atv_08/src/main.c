@@ -221,15 +221,37 @@ ISR(TIMER1_COMPA_vect){
 //**TASK DE CONTROLE DO LCD**//
 void vTaskLCD (void *pv){
 
-inic_LCD_4bits();
-	
+	inic_LCD_4bits();
+	char linha1[17];
+	char linha2[17];
 	while(1)
 	{
 		lcd_clear();
+		// Linha 1: Tipo de onda, duty (se aplicável), status alinhado à direita
+		const char *onda_str;
+		switch (onda_selecionada) {
+			case Quadrada: onda_str = "QUA"; break;
+			case Triangular: onda_str = "TRI"; break;
+			case Rampa: onda_str = "RAM"; break;
+			case Senoide: onda_str = "SEN"; break;
+			default: onda_str = "---"; break;
+		}
+		if (onda_selecionada == Quadrada || onda_selecionada == Triangular) {
+			// Exemplo: T:QUA D:99%  OFF (16 chars)
+			snprintf(linha1, 17, "T:%-3s D:%02u%% %2s", onda_str, duty_cycle, saida_ligada ? "ON" : "OFF");
+		} else {
+			// Exemplo: T:RAM        OFF (16 chars)
+			snprintf(linha1, 17, "T:%-3s        %3s", onda_str, saida_ligada ? "ON" : "OFF");
+		}
+		// Linha 2: freq, amp, offset
+		float amp_v = (amp_vpp * 5.0) / 255.0;
+		float off_v = (offset_v * 5.0) / 255.0;
+		snprintf(linha2, 17, "%3uHz %1.1fV %1.1fV", freq_hz, amp_v, off_v);
 		lcd_goto(0, 0);
-		escreve_LCD("hello");
-	
-		vTaskDelay(pdMS_TO_TICKS(5000));	
+		escreve_LCD(linha1);
+		lcd_goto(1, 0);
+		escreve_LCD(linha2);
+		vTaskDelay(pdMS_TO_TICKS(500));
 	}
 }
 
