@@ -310,6 +310,7 @@ int main(void)
 //**TASK DE AJUSTE DE PARÂMETROS**//
 
 // Parâmetro selecionado: 0=freq, 1=amp, 2=offset, 3=duty
+// 0=função(onda), 1=freq, 2=amp, 3=offset, 4=duty
 uint8_t parametro = 0;
 void vTaskParametros(void *pv) {
 	// Garante limites seguros na inicialização
@@ -324,16 +325,10 @@ void vTaskParametros(void *pv) {
 	const TickType_t delay_fast = pdMS_TO_TICKS(100);    // 10Hz
 	const TickType_t retrigger_time = pdMS_TO_TICKS(5000); // 5s
 	while(1) {
-		// Botão M: troca parâmetro OU forma de onda
+		// Botão M: troca parâmetro (função, freq, amp, offset, duty)
 		if (btn_m_flag) {
 			btn_m_flag = 0;
-			if (parametro == 0) {
-				// Se está em freq, troca a onda
-				onda_selecionada = (onda_selecionada + 1) % Total_ondas;
-			} else {
-				// Senão, troca o parâmetro
-				parametro = (parametro + 1) % 4;
-			}
+			parametro = (parametro + 1) % 5;
 		}
 
 		// --- UP (▲) retrigger ---
@@ -344,30 +339,29 @@ void vTaskParametros(void *pv) {
 			last_up_press = up_press_time;
 			// Incrementa imediatamente
 			switch(parametro) {
-				case 0: if (freq_hz < 100) freq_hz++; break;
-				case 1: if (amp_vpp <= 250) amp_vpp += 5; break;
-				case 2: if (offset_v <= 250) offset_v += 5; break;
-				case 3: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
+				case 0: // função (onda)
+					onda_selecionada = (onda_selecionada + 1) % Total_ondas;
+					break;
+				case 1: if (freq_hz < 100) freq_hz++; break;
+				case 2: if (amp_vpp <= 250) amp_vpp += 5; if (amp_vpp > 255) amp_vpp = 255; break;
+				case 3: if (offset_v <= 250) offset_v += 5; if (offset_v > 255) offset_v = 255; break;
+				case 4: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
 			}
-			// Saturação após incremento
-			if (amp_vpp > 255) amp_vpp = 255;
-			if (offset_v > 255) offset_v = 255;
 		}
 		// Se botão UP está sendo segurado
-		if (up_held && btn_read(BTN_S2)) { // BTN_S2 agora é UP
+		if (up_held && btn_read(BTN_S2)) {
 			TickType_t now = xTaskGetTickCount();
 			TickType_t held_time = now - up_press_time;
 			TickType_t interval = (held_time > retrigger_time) ? delay_fast : delay_normal;
 			if (now - last_up_press >= interval) {
 				last_up_press = now;
 				switch(parametro) {
-					case 0: if (freq_hz < 100) freq_hz++; break;
-					case 1: if (amp_vpp <= 250) amp_vpp += 5; break;
-					case 2: if (offset_v <= 250) offset_v += 5; break;
-					case 3: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
+					case 0: onda_selecionada = (onda_selecionada + 1) % Total_ondas; break;
+					case 1: if (freq_hz < 100) freq_hz++; break;
+					case 2: if (amp_vpp <= 250) amp_vpp += 5; if (amp_vpp > 255) amp_vpp = 255; break;
+					case 3: if (offset_v <= 250) offset_v += 5; if (offset_v > 255) offset_v = 255; break;
+					case 4: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
 				}
-				if (amp_vpp > 255) amp_vpp = 255;
-				if (offset_v > 255) offset_v = 255;
 			}
 		} else {
 			up_held = 0;
@@ -381,29 +375,30 @@ void vTaskParametros(void *pv) {
 			last_down_press = down_press_time;
 			// Decrementa imediatamente
 			switch(parametro) {
-				case 0: if (freq_hz > 1) freq_hz--; break;
-				case 1: if (amp_vpp >= 5) amp_vpp -= 5; break;
-				case 2: if (offset_v >= 5) offset_v -= 5; break;
-				case 3: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
+				case 0: // função (onda)
+					if (onda_selecionada == 0) onda_selecionada = Total_ondas-1;
+					else onda_selecionada--;
+					break;
+				case 1: if (freq_hz > 1) freq_hz--; break;
+				case 2: if (amp_vpp >= 5) amp_vpp -= 5; break;
+				case 3: if (offset_v >= 5) offset_v -= 5; break;
+				case 4: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
 			}
-			if (amp_vpp > 255) amp_vpp = 255;
-			if (offset_v > 255) offset_v = 255;
 		}
 		// Se botão DOWN está sendo segurado
-		if (down_held && btn_read(BTN_S0)) { // BTN_S0 agora é DOWN
+		if (down_held && btn_read(BTN_S0)) {
 			TickType_t now = xTaskGetTickCount();
 			TickType_t held_time = now - down_press_time;
 			TickType_t interval = (held_time > retrigger_time) ? delay_fast : delay_normal;
 			if (now - last_down_press >= interval) {
 				last_down_press = now;
 				switch(parametro) {
-					case 0: if (freq_hz > 1) freq_hz--; break;
-					case 1: if (amp_vpp >= 5) amp_vpp -= 5; break;
-					case 2: if (offset_v >= 5) offset_v -= 5; break;
-					case 3: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
+					case 0: if (onda_selecionada == 0) onda_selecionada = Total_ondas-1; else onda_selecionada--; break;
+					case 1: if (freq_hz > 1) freq_hz--; break;
+					case 2: if (amp_vpp >= 5) amp_vpp -= 5; break;
+					case 3: if (offset_v >= 5) offset_v -= 5; break;
+					case 4: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
 				}
-				if (amp_vpp > 255) amp_vpp = 255;
-				if (offset_v > 255) offset_v = 255;
 			}
 		} else {
 			down_held = 0;
