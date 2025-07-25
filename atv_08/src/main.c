@@ -235,12 +235,12 @@ ISR(TIMER1_COMPA_vect){
 
 //**TASK DE CONTROLE DO LCD**//
 void vTaskLCD (void *pv){
-	extern uint8_t parametro; // Para saber qual está selecionado
+	// extern uint8_t parametro; // Não é necessário aqui
 	inic_LCD_4bits();
 	char linha1[17];
 	while(1)
 	{
-		lcd_clear();
+		// lcd_clear(); // Removido para evitar travamento e sobrecarga do LCD
 		// Linha 1: Tipo de onda, duty (se aplicável), status alinhado à direita
 		const char *onda_str;
 		switch (onda_selecionada) {
@@ -256,10 +256,15 @@ void vTaskLCD (void *pv){
 			snprintf(linha1, 17, "T:%-3s        %3s", onda_str, saida_ligada ? "ON" : "OFF");
 		}
 
-		float amp_v = (amp_vpp * 5.0) / 255.0;
-		float off_v = (offset_v * 5.0) / 255.0;
-		char l2[17] = "";
-		snprintf(l2, 17, "%3uHz %1.1fV %1.1fV", freq_hz, amp_v, off_v);
+		// Offset e amplitude em décimos de volt (0-50)
+		uint8_t off_v_int = (uint8_t)(((offset_v * 5.0f) / 255.0f) * 10.0f + 0.5f); // arredonda
+		uint8_t amp_v_int = (uint8_t)(((amp_vpp * 5.0f) / 255.0f) * 10.0f + 0.5f);
+		// Formato compacto: "Hz A.V O.V" (ex: 10Hz 2.5V 1.2V), máximo 16 caracteres
+		char l2[17];
+		// Exemplo: " 10Hz 2.5V 1.2V"
+		// Garantir que não ultrapasse 16 caracteres
+		int n = snprintf(l2, sizeof(l2), "%3uHz %1u.%1uV %1u.%1uV", freq_hz, amp_v_int/10, amp_v_int%10, off_v_int/10, off_v_int%10);
+		if (n > 16) l2[16] = '\0'; // Garante terminação
 		lcd_goto(0, 0);
 		escreve_LCD(linha1);
 		lcd_goto(1, 0);
@@ -314,10 +319,16 @@ void vTaskParametros(void *pv) {
 	const TickType_t delay_fast = pdMS_TO_TICKS(100);    // 10Hz
 	const TickType_t retrigger_time = pdMS_TO_TICKS(5000); // 5s
 	while(1) {
-		// Botão M: troca parâmetro
+		// Botão M: troca parâmetro OU forma de onda
 		if (btn_m_flag) {
 			btn_m_flag = 0;
-			parametro = (parametro + 1) % 4;
+			if (parametro == 0) {
+				// Se está em freq, troca a onda
+				onda_selecionada = (onda_selecionada + 1) % Total_ondas;
+			} else {
+				// Senão, troca o parâmetro
+				parametro = (parametro + 1) % 4;
+			}
 		}
 
 		// --- UP (▲) retrigger ---
@@ -329,15 +340,13 @@ void vTaskParametros(void *pv) {
 			// Incrementa imediatamente
 			switch(parametro) {
 				case 0: if (freq_hz < 100) freq_hz++; break;
-				case 1: if (amp_vpp < 250) amp_vpp += 5; break;
-				case 2: if (offset_v < 250) offset_v += 5; break;
+				case 1: if (amp_vpp <= 250) amp_vpp += 5; break;
+				case 2: if (offset_v <= 250) offset_v += 5; break;
 				case 3: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
 			}
 			// Saturação após incremento
 			if (amp_vpp > 255) amp_vpp = 255;
-			if (amp_vpp < 0) amp_vpp = 0;
 			if (offset_v > 255) offset_v = 255;
-			if (offset_v < 0) offset_v = 0;
 		}
 		// Se botão UP está sendo segurado
 		if (up_held && btn_read(BTN_S2)) { // BTN_S2 agora é UP
@@ -348,15 +357,12 @@ void vTaskParametros(void *pv) {
 				last_up_press = now;
 				switch(parametro) {
 					case 0: if (freq_hz < 100) freq_hz++; break;
-					case 1: if (amp_vpp < 250) amp_vpp += 5; break;
-					case 2: if (offset_v < 250) offset_v += 5; break;
+					case 1: if (amp_vpp <= 250) amp_vpp += 5; break;
+					case 2: if (offset_v <= 250) offset_v += 5; break;
 					case 3: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
 				}
-				// Saturação após incremento
 				if (amp_vpp > 255) amp_vpp = 255;
-				if (amp_vpp < 0) amp_vpp = 0;
 				if (offset_v > 255) offset_v = 255;
-				if (offset_v < 0) offset_v = 0;
 			}
 		} else {
 			up_held = 0;
@@ -375,11 +381,8 @@ void vTaskParametros(void *pv) {
 				case 2: if (offset_v >= 5) offset_v -= 5; break;
 				case 3: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
 			}
-			// Saturação após decremento
 			if (amp_vpp > 255) amp_vpp = 255;
-			if (amp_vpp < 0) amp_vpp = 0;
 			if (offset_v > 255) offset_v = 255;
-			if (offset_v < 0) offset_v = 0;
 		}
 		// Se botão DOWN está sendo segurado
 		if (down_held && btn_read(BTN_S0)) { // BTN_S0 agora é DOWN
@@ -394,11 +397,8 @@ void vTaskParametros(void *pv) {
 					case 2: if (offset_v >= 5) offset_v -= 5; break;
 					case 3: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
 				}
-				// Saturação após decremento
 				if (amp_vpp > 255) amp_vpp = 255;
-				if (amp_vpp < 0) amp_vpp = 0;
 				if (offset_v > 255) offset_v = 255;
-				if (offset_v < 0) offset_v = 0;
 			}
 		} else {
 			down_held = 0;
