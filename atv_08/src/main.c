@@ -250,10 +250,12 @@ void vTaskLCD (void *pv){
 			case Senoide: onda_str = "SEN"; break;
 			default: onda_str = "---"; break;
 		}
+		// Garante campo status sempre com 3 caracteres
+		const char *status_str = saida_ligada ? " ON " : " OFF";
 		if (onda_selecionada == Quadrada || onda_selecionada == Triangular) {
-			snprintf(linha1, 17, "T:%-3s D:%02u%% %2s", onda_str, duty_cycle, saida_ligada ? "ON" : "OFF");
+			snprintf(linha1, 17, "T:%-3s D:%02u%%%3s", onda_str, duty_cycle, status_str);
 		} else {
-			snprintf(linha1, 17, "T:%-3s        %3s", onda_str, saida_ligada ? "ON" : "OFF");
+			snprintf(linha1, 17, "T:%-3s      %3s", onda_str, status_str);
 		}
 
 		// Offset e amplitude em décimos de volt (0-50)
