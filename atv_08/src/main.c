@@ -17,6 +17,13 @@
 #include <stdio.h>
 #include "lcd.h"
 #include "btn.h"
+
+#ifndef BTN_S0
+#define BTN_S0 0
+#endif
+#ifndef BTN_S2
+#define BTN_S2 2
+#endif
 // Protótipo da task de ajuste de parâmetros
 void vTaskParametros(void *pv);
 
@@ -317,50 +324,83 @@ int main(void)
 // Parâmetro selecionado: 0=freq, 1=amp, 2=offset, 3=duty
 uint8_t parametro = 0;
 void vTaskParametros(void *pv) {
+	TickType_t last_up_press = 0, last_down_press = 0;
+	TickType_t up_press_time = 0, down_press_time = 0;
+	uint8_t up_held = 0, down_held = 0;
+	const TickType_t delay_normal = pdMS_TO_TICKS(1000); // 1Hz
+	const TickType_t delay_fast = pdMS_TO_TICKS(100);    // 10Hz
+	const TickType_t retrigger_time = pdMS_TO_TICKS(5000); // 5s
 	while(1) {
 		// Botão M: troca parâmetro
 		if (btn_m_flag) {
 			btn_m_flag = 0;
 			parametro = (parametro + 1) % 4;
 		}
-		// Botão ▲: incrementa
+
+		// --- UP (▲) retrigger ---
 		if (btn_up_flag) {
 			btn_up_flag = 0;
+			up_held = 1;
+			up_press_time = xTaskGetTickCount();
+			last_up_press = up_press_time;
+			// Incrementa imediatamente
 			switch(parametro) {
-				case 0: // freq (1-100Hz, passo 1Hz)
-					if (freq_hz < 100) freq_hz++;
-					break;
-				case 1: // amp (0,0-5,0V, passo 0,1V)
-					if (amp_vpp < 250) amp_vpp += 5;
-					break;
-				case 2: // offset (0,0-5,0V, passo 0,1V)
-					if (offset_v < 250) offset_v += 5;
-					break;
-				case 3: // duty (1-99%)
-					if (duty_cycle < 99) duty_cycle++;
-					valor_comp_dc = ajuste_dc(duty_cycle);
-					break;
+				case 0: if (freq_hz < 100) freq_hz++; break;
+				case 1: if (amp_vpp < 250) amp_vpp += 5; break;
+				case 2: if (offset_v < 250) offset_v += 5; break;
+				case 3: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
 			}
 		}
-		// Botão ▼: decrementa
+		// Se botão UP está sendo segurado
+		if (up_held && btn_read(BTN_S2)) { // BTN_S2 agora é UP
+			TickType_t now = xTaskGetTickCount();
+			TickType_t held_time = now - up_press_time;
+			TickType_t interval = (held_time > retrigger_time) ? delay_fast : delay_normal;
+			if (now - last_up_press >= interval) {
+				last_up_press = now;
+				switch(parametro) {
+					case 0: if (freq_hz < 100) freq_hz++; break;
+					case 1: if (amp_vpp < 250) amp_vpp += 5; break;
+					case 2: if (offset_v < 250) offset_v += 5; break;
+					case 3: if (duty_cycle < 99) duty_cycle++; valor_comp_dc = ajuste_dc(duty_cycle); break;
+				}
+			}
+		} else {
+			up_held = 0;
+		}
+
+		// --- DOWN (▼) retrigger ---
 		if (btn_down_flag) {
 			btn_down_flag = 0;
+			down_held = 1;
+			down_press_time = xTaskGetTickCount();
+			last_down_press = down_press_time;
+			// Decrementa imediatamente
 			switch(parametro) {
-				case 0: // freq
-					if (freq_hz > 1) freq_hz--;
-					break;
-				case 1: // amp
-					if (amp_vpp >= 5) amp_vpp -= 5;
-					break;
-				case 2: // offset
-					if (offset_v >= 5) offset_v -= 5;
-					break;
-				case 3: // duty
-					if (duty_cycle > 1) duty_cycle--;
-					valor_comp_dc = ajuste_dc(duty_cycle);
-					break;
+				case 0: if (freq_hz > 1) freq_hz--; break;
+				case 1: if (amp_vpp >= 5) amp_vpp -= 5; break;
+				case 2: if (offset_v >= 5) offset_v -= 5; break;
+				case 3: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
 			}
 		}
+		// Se botão DOWN está sendo segurado
+		if (down_held && btn_read(BTN_S0)) { // BTN_S0 agora é DOWN
+			TickType_t now = xTaskGetTickCount();
+			TickType_t held_time = now - down_press_time;
+			TickType_t interval = (held_time > retrigger_time) ? delay_fast : delay_normal;
+			if (now - last_down_press >= interval) {
+				last_down_press = now;
+				switch(parametro) {
+					case 0: if (freq_hz > 1) freq_hz--; break;
+					case 1: if (amp_vpp >= 5) amp_vpp -= 5; break;
+					case 2: if (offset_v >= 5) offset_v -= 5; break;
+					case 3: if (duty_cycle > 1) duty_cycle--; valor_comp_dc = ajuste_dc(duty_cycle); break;
+				}
+			}
+		} else {
+			down_held = 0;
+		}
+
 		// Botão A: liga/desliga saída
 		if (btn_a_flag) {
 			btn_a_flag = 0;
