@@ -2,7 +2,7 @@
  * atv08_3717_251.c
  *
  * Created: 14/07/2025 15:51:50
- * Author : livia
+ * Author : livia e rutileno
  */ 
 #define F_CPU 16000000UL
 
